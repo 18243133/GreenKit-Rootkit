@@ -8,6 +8,7 @@ Lancement du virus au démarrage :
 
 EXPLOITS :
 	Privilege escalation :
+		https://blog.netspi.com/windows-privilege-escalation-part-1-local-administrator-privileges/
 		Guest to Admin =>
 			W7 :
 				x86:
@@ -17,6 +18,9 @@ EXPLOITS :
 				x86:
 					http://download.pureftpd.org/public/misc/UAC.cpp
 				x64:
+
+A lire :
+
 
 A analyser :
 http://www.pretentiousname.com/misc/W7E_Source/Win7Elevate_Utils.cpp.html
