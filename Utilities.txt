@@ -6,5 +6,14 @@ Lancement du virus au démarrage :
 	- Win6-7-8: C:\users\%username%\AppData\Roaming\Microsoft\Windows\Start 
 	- Regitre : HKCU\Software\Microsoft\Windows\CurrentVersion\Run
 
-Admin privilege escalation :
-	http://download.pureftpd.org/public/misc/UAC.cpp
+EXPLOITS :
+	Privilege escalation :
+		Guest to Admin =>
+			W7 :
+				x86:
+					http://download.pureftpd.org/public/misc/UAC.cpp
+				x64
+			W8:
+				x86:
+					http://download.pureftpd.org/public/misc/UAC.cpp
+				x64:
