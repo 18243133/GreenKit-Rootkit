@@ -17,3 +17,6 @@ EXPLOITS :
 				x86:
 					http://download.pureftpd.org/public/misc/UAC.cpp
 				x64:
+
+A analyser :
+http://www.pretentiousname.com/misc/W7E_Source/Win7Elevate_Utils.cpp.html
