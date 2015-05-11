@@ -26,3 +26,5 @@ A analyser :
 http://www.pretentiousname.com/misc/W7E_Source/Win7Elevate_Utils.cpp.html
 http://www.adlice.com/fr/rootkits-noyau-partie-1-hooks-ssdt/
 http://www.kernelhacking.com/rodrigo/docs/StMichael/kernel-land-rootkits.pdf
+Création d'un driver: http://www.codeproject.com/Articles/9504/Driver-Development-Part-Introduction-to-Drivers
+Hooker la SSDT: http://resources.infosecinstitute.com/hooking-system-service-dispatch-table-ssdt/
