@@ -28,3 +28,5 @@ http://www.adlice.com/fr/rootkits-noyau-partie-1-hooks-ssdt/
 http://www.kernelhacking.com/rodrigo/docs/StMichael/kernel-land-rootkits.pdf
 Création d'un driver: http://www.codeproject.com/Articles/9504/Driver-Development-Part-Introduction-to-Drivers
 Hooker la SSDT: http://resources.infosecinstitute.com/hooking-system-service-dispatch-table-ssdt/
+Cacher un rootkit driver avec DKROM: http://www.flatland.tuxfamily.org/dkom_driver.php
+Créer un rootkit kernel land et le protéger: http://c0decstuff.blogspot.fr/2011/01/ring-0f-fire-rootkits-and-dkom.html
