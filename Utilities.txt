@@ -24,3 +24,5 @@ A lire :
 
 A analyser :
 http://www.pretentiousname.com/misc/W7E_Source/Win7Elevate_Utils.cpp.html
+http://www.adlice.com/fr/rootkits-noyau-partie-1-hooks-ssdt/
+http://www.kernelhacking.com/rodrigo/docs/StMichael/kernel-land-rootkits.pdf
