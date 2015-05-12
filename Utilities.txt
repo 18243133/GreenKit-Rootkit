@@ -31,3 +31,5 @@ Hooker la SSDT: http://resources.infosecinstitute.com/hooking-system-service-dis
 Cacher un rootkit driver avec DKROM: http://www.flatland.tuxfamily.org/dkom_driver.php
 Créer un rootkit kernel land et le protéger: http://c0decstuff.blogspot.fr/2011/01/ring-0f-fire-rootkits-and-dkom.html
 Tuto rootkit XP Sp3 http://www.infond.fr/2009/10/tutoriel-rootkits-coder-son-premier.html
+How to bypass patchguard http://vrt-blog.snort.org/2014/08/the-windows-81-kernel-patch-protection.html
+Patchguards and some malwares http://www.malekal.com/2011/09/07/rootkit-et-patchguard-sur-windows-64-bits/
