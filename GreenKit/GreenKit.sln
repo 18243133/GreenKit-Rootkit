@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreenKit", "GreenKit.vcxproj", "{FF770FB3-028B-4109-8789-7591BED3B4EC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreenKit", "GreenKit.vcxproj", "{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +11,10 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{FF770FB3-028B-4109-8789-7591BED3B4EC}.Debug|Win32.ActiveCfg = Debug|Win32
-		{FF770FB3-028B-4109-8789-7591BED3B4EC}.Debug|Win32.Build.0 = Debug|Win32
-		{FF770FB3-028B-4109-8789-7591BED3B4EC}.Release|Win32.ActiveCfg = Release|Win32
-		{FF770FB3-028B-4109-8789-7591BED3B4EC}.Release|Win32.Build.0 = Release|Win32
+		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}.Debug|Win32.Build.0 = Debug|Win32
+		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}.Release|Win32.ActiveCfg = Release|Win32
+		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
