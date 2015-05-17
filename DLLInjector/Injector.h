@@ -1,7 +1,7 @@
 #pragma once
 #include <Windows.h>
 
-#define DLL_PATH "\\ExampleDLL.dll" // METTRE ICI LA DLL
+#define DLL_PATH "\\GreenKit.dll" // METTRE ICI LA DLL
 
 class Injector
 {
