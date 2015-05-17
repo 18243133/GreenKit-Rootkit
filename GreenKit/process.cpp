@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "process.h"
+#include "utils.h"
 
 // GLOBALS
 DWORD dwGKPID;
@@ -51,22 +52,22 @@ BOOL process_suspendOrResumeAllThreads(DWORD dwPID, BOOL bSuspend) {
 
 	while (TRUE) {
 		if (dwPID == te32.th32OwnerProcessID) {
-			OutputDebugStringA("\Found thread of process\r\n");
 			if (NULL == (hT = OpenThread(THREAD_SUSPEND_RESUME, FALSE, te32.th32ThreadID))) {
-				OutputDebugStringA("\Failed to open thread.\r\n");
-				// GetLastError(); exploit this
+				utils_debugOutputErrCode(GetLastError());
 				break;
 			}
 
 			if (bSuspend) {
-				if (-1 == SuspendThread(hT)) // Failed to suspend thread
+				if (-1 == SuspendThread(hT)) {
+					utils_debugOutputErrCode(GetLastError());
 					break;
-				OutputDebugStringA("\t\tSuspend Thread OK\r\n");
+				}
 			}
 			else {
-				if (-1 == ResumeThread(hT)) // Failed to suspend thread
+				if (-1 == ResumeThread(hT)) {
+					utils_debugOutputErrCode(GetLastError());
 					break;
-				OutputDebugStringA("\t\tResume Thread OK\r\n");
+				}
 			}
 		}
 
