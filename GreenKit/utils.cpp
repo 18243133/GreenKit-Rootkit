@@ -3,7 +3,7 @@
 
 #include <string>
 
-char* utils_getLastErrorStr(DWORD dwErrCode) {
+LPSTR utils_getLastErrorStr(DWORD dwErrCode) {
 	LPTSTR errorText = NULL;
 
 	FormatMessage(
@@ -20,7 +20,7 @@ char* utils_getLastErrorStr(DWORD dwErrCode) {
 		(LPTSTR)&errorText,  // output 
 		0, // minimum size for output buffer
 		NULL);   // arguments - see note 
-	return (char *) errorText;
+	return errorText;
 }
 
 void utils_debugOutputErrCode(DWORD dwErrCode) {
