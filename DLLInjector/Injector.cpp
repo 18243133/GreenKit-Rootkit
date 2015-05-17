@@ -16,7 +16,19 @@ Injector::~Injector(void)
 
 #define CREATE_THREAD_ACCESS (PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ) 
 
-bool Injector::Deploy()
+
+int fileExists(TCHAR * file)
+{
+    WIN32_FIND_DATA FindFileData;
+    HANDLE handle = FindFirstFile(file, &FindFileData);
+    int found = handle != INVALID_HANDLE_VALUE;
+    if (found)
+        FindClose(handle);
+    return found;
+}
+
+
+bool Injector::HookProcess(char* procName)
 {
     TCHAR currentDir[MAX_PATH];
     TCHAR dllDir[MAX_PATH];
@@ -28,11 +40,11 @@ bool Injector::Deploy()
 
     printf("Current dir: %s\n", currentDir);
     printf("DLL path: %s\n", dllDir);
-    printf("Target Process: %s\n", PROC_NAME);
+    printf("Target Process: %s\n", procName);
 
     system("PAUSE");
     
-    if (Inject(PROC_NAME, dllDir))
+    if (fileExists(dllDir) && Inject(procName, dllDir))
         printf("Injection successful!\n");
     else
     {
@@ -60,7 +72,9 @@ bool Injector::Inject(char* procName,char* dllName)
    printf(DLL_NAME); 
    printf("\n");
    HANDLE processus = 0;
+   HANDLE hThread = 0;
    HMODULE hLib = 0; 
+   HMODULE hInjected;
    char buf[50] = {0}; 
    LPVOID RemoteString, LoadLibAddy; 
 
@@ -81,7 +95,14 @@ bool Injector::Inject(char* procName,char* dllName)
    WriteProcessMemory(processus, (LPVOID)RemoteString, DLL_NAME, strlen(DLL_NAME), NULL);
 
    // Load our DLL
-   CreateRemoteThread(processus, NULL, NULL, (LPTHREAD_START_ROUTINE)LoadLibAddy, (LPVOID)RemoteString, NULL, NULL);
+   hThread = CreateRemoteThread(processus, NULL, NULL, (LPTHREAD_START_ROUTINE)LoadLibAddy, (LPVOID)RemoteString, NULL, NULL);
+
+   // Locate address our payload was loaded
+   if (hThread != 0) {
+       WaitForSingleObject(hThread, INFINITE);
+       GetExitCodeThread(hThread, (LPDWORD)&hInjected);
+       CloseHandle(hThread);
+   }
 
    CloseHandle(processus);
    return true; 

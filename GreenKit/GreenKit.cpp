@@ -4,6 +4,9 @@
 #include "stdafx.h"
 #include "GreenKit.h"
 #include "process.h"
+#include <Windows.h>
+#include <string.h>
+#include <stdio.h>
 
 // Global Variables:
 HINSTANCE hInst;								// current instance
