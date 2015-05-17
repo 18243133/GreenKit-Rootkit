@@ -52,9 +52,12 @@ BOOL process_suspendOrResumeAllThreads(DWORD dwPID, BOOL bSuspend) {
 	while (TRUE) {
 		if (dwPID == te32.th32OwnerProcessID) {
 			OutputDebugStringA("\Found thread of process\r\n");
-			if (NULL == (hT = OpenThread(THREAD_SUSPEND_RESUME, FALSE, te32.th32ThreadID))) // Failed to open thread, stopping for now
+			if (NULL == (hT = OpenThread(THREAD_SUSPEND_RESUME, FALSE, te32.th32ThreadID))) {
+				OutputDebugStringA("\Failed to open thread.\r\n");
 				// GetLastError(); exploit this
 				break;
+			}
+
 			if (bSuspend) {
 				if (-1 == SuspendThread(hT)) // Failed to suspend thread
 					break;
