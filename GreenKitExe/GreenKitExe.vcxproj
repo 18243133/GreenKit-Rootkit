@@ -80,6 +80,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\DLLInjector\Injector.h" />
     <ClInclude Include="..\GreenKit\utils.h" />
     <ClInclude Include="GreenKit.h" />
     <ClInclude Include="process.h" />
@@ -88,6 +89,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\DLLInjector\Injector.cpp" />
     <ClCompile Include="..\GreenKit\utils.cpp" />
     <ClCompile Include="GreenKitExe.cpp" />
     <ClCompile Include="process.cpp" />

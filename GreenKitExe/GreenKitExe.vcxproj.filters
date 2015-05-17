@@ -13,6 +13,9 @@
     <ClCompile Include="..\GreenKit\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\DLLInjector\Injector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GreenKit.h">
@@ -31,6 +34,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\GreenKit\utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DLLInjector\Injector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

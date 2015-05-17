@@ -8,6 +8,6 @@ Injector* injector = new Injector();
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-    injector->HookProcess("cheatengine-i386.exe");
+    //injector->HookProcess("cheatengine-i386.exe");
 }
 

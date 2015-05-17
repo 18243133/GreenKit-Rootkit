@@ -1,10 +1,20 @@
-#include "stdafx.h"
+#include "Injector.h"
 #include <windows.h>
 #include <tlhelp32.h>
 #include <shlwapi.h>
 #include <conio.h>
 #include <stdio.h> 
-#include "Injector.h"
+
+Injector::Injector(void)
+{
+}
+
+
+Injector::~Injector(void)
+{
+} 
+
+#define CREATE_THREAD_ACCESS (PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ) 
 
 
 int fileExists(TCHAR * file)
@@ -18,11 +28,11 @@ int fileExists(TCHAR * file)
 }
 
 
-BOOL HookProcess(HANDLE procName)
+bool Injector::HookProcess(char* procName)
 {
     TCHAR currentDir[MAX_PATH];
     TCHAR dllDir[MAX_PATH];
-    BOOL isSuccessful = TRUE;
+    bool isSuccessful = true;
     GetCurrentDirectory(MAX_PATH, currentDir);
 
     strcpy(dllDir, currentDir);
@@ -39,7 +49,7 @@ BOOL HookProcess(HANDLE procName)
     else
     {
         printf("Couldn't inject the DLL...\n");
-        isSuccessful = FALSE;
+        isSuccessful = false;
     }
 
     system("PAUSE");
@@ -47,7 +57,7 @@ BOOL HookProcess(HANDLE procName)
 }
 
 //use it with procName
-bool Inject(HANDLE procName,char* dllName)
+bool Injector::Inject(char* procName,char* dllName)
 {
     if (!procName)
         return false;
@@ -99,7 +109,7 @@ bool Inject(HANDLE procName,char* dllName)
 }
 
 //use it with procID
-bool Inject(DWORD pID, char* dllName)
+bool Injector::Inject(DWORD pID, char* dllName)
 {
     if (!pID)
         return false;
@@ -141,7 +151,7 @@ bool Inject(DWORD pID, char* dllName)
    return true; 
 }
 
-DWORD GetTargetThreadIDFromProcName(HANDLE ProcName)
+DWORD Injector::GetTargetThreadIDFromProcName(const char * ProcName)
 {
 	PROCESSENTRY32 pe;
 	HANDLE thSnapShot;
@@ -157,10 +167,11 @@ DWORD GetTargetThreadIDFromProcName(HANDLE ProcName)
 	retval = Process32First(thSnapShot, &pe);
 	while(retval)
 	{
-		if(!strcmp(pe.szExeFile, (const char*) ProcName))
+		if(!strcmp(pe.szExeFile, ProcName))
 			return pe.th32ProcessID;
 
 		retval = Process32Next(thSnapShot, &pe);
 	}
 	return 0;
 }
+

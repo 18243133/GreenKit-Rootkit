@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "GreenKitExe.h"
 #include "process.h"
+#include "Injector.h"
 #include <Windows.h>
 #include <string.h>
 #include <stdio.h>
@@ -32,6 +33,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	*/
 
 	// Run through every process of the system
-	process_allSuspendApplyResume(NULL);
+   
+    process_allSuspendApplyResume(HookProcess);
 	return 0;
 }

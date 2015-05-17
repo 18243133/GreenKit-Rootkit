@@ -5,8 +5,6 @@ VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreenKit", "GreenKit.vcxproj", "{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DLLInjector", "..\DLLInjector\DLLInjector.vcxproj", "{B43B9EEF-2923-42AC-8A09-49D9E6095390}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreenKitExe", "..\GreenKitExe\GreenKitExe.vcxproj", "{353F1E6B-13ED-42F5-AA8B-B05BF72C73C7}"
 EndProject
 Global
@@ -19,10 +17,6 @@ Global
 		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}.Debug|Win32.Build.0 = Debug|Win32
 		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}.Release|Win32.ActiveCfg = Release|Win32
 		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}.Release|Win32.Build.0 = Release|Win32
-		{B43B9EEF-2923-42AC-8A09-49D9E6095390}.Debug|Win32.ActiveCfg = Debug|Win32
-		{B43B9EEF-2923-42AC-8A09-49D9E6095390}.Debug|Win32.Build.0 = Debug|Win32
-		{B43B9EEF-2923-42AC-8A09-49D9E6095390}.Release|Win32.ActiveCfg = Release|Win32
-		{B43B9EEF-2923-42AC-8A09-49D9E6095390}.Release|Win32.Build.0 = Release|Win32
 		{353F1E6B-13ED-42F5-AA8B-B05BF72C73C7}.Debug|Win32.ActiveCfg = Debug|Win32
 		{353F1E6B-13ED-42F5-AA8B-B05BF72C73C7}.Debug|Win32.Build.0 = Debug|Win32
 		{353F1E6B-13ED-42F5-AA8B-B05BF72C73C7}.Release|Win32.ActiveCfg = Release|Win32
