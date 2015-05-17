@@ -2,7 +2,6 @@
 #include <Windows.h>
 
 #define DLL_PATH "\\ExampleDLL.dll" // METTRE ICI LA DLL
-#define PROC_NAME "iexplore.exe" 
 
 class Injector
 {
@@ -12,7 +11,7 @@ public:
 
 	bool Inject(char* procName,char* dllName);
 	bool Inject(DWORD pID,char* dllName);
-    bool Deploy();
+    bool HookProcess(char* procName);
 
 private:
 	DWORD GetTargetThreadIDFromProcName(const char * ProcName);
