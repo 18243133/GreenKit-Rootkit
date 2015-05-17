@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreenKitDll", "GreenKit.vcxproj", "{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreenKit", "GreenKit.vcxproj", "{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DLLInjector", "..\DLLInjector\DLLInjector.vcxproj", "{B43B9EEF-2923-42AC-8A09-49D9E6095390}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreenKitApp", "..\Win32Project1\Win32Project1.vcxproj", "{904AB1A2-3A13-4EF1-B602-B4DE55F9CD29}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,15 +14,13 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}.Debug|Win32.Build.0 = Debug|Win32
 		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}.Release|Win32.ActiveCfg = Release|Win32
 		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}.Release|Win32.Build.0 = Release|Win32
 		{B43B9EEF-2923-42AC-8A09-49D9E6095390}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B43B9EEF-2923-42AC-8A09-49D9E6095390}.Debug|Win32.Build.0 = Debug|Win32
 		{B43B9EEF-2923-42AC-8A09-49D9E6095390}.Release|Win32.ActiveCfg = Release|Win32
 		{B43B9EEF-2923-42AC-8A09-49D9E6095390}.Release|Win32.Build.0 = Release|Win32
-		{904AB1A2-3A13-4EF1-B602-B4DE55F9CD29}.Debug|Win32.ActiveCfg = Debug|Win32
-		{904AB1A2-3A13-4EF1-B602-B4DE55F9CD29}.Debug|Win32.Build.0 = Debug|Win32
-		{904AB1A2-3A13-4EF1-B602-B4DE55F9CD29}.Release|Win32.ActiveCfg = Release|Win32
-		{904AB1A2-3A13-4EF1-B602-B4DE55F9CD29}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
