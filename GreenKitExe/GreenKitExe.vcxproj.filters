@@ -16,6 +16,9 @@
     <ClCompile Include="Injector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MemoryModule.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="process.h">
@@ -37,6 +40,10 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Injector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource1.h" />
+    <ClInclude Include="MemoryModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
