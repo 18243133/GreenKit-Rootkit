@@ -1,7 +1,6 @@
 #pragma once
 
-typedef void(*APPLY)(HANDLE);
-
+typedef BOOL(*APPLY)(HANDLE);
 
 BOOL process_allSuspendApplyResume(APPLY);
 BOOL process_suspendOrResumeAllThreads(DWORD, BOOL);
