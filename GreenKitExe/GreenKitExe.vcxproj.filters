@@ -42,7 +42,6 @@
     <ClInclude Include="Injector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource1.h" />
     <ClInclude Include="MemoryModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
