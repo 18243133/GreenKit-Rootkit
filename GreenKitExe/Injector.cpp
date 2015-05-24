@@ -1,10 +1,5 @@
 #include "stdafx.h"
 #include "Injector.h"
-#include <windows.h>
-#include <tlhelp32.h>
-#include <shlwapi.h>
-#include <conio.h>
-#include <stdio.h> 
 
 BOOL fileExists(TCHAR * file)
 {
@@ -67,5 +62,62 @@ BOOL Inject(HANDLE hProc, LPSTR dllName)
    }
 
    return TRUE; 
+}
+
+LPVOID GetPayloadExportAddr(LPCSTR lpPath, HMODULE hPayloadBase, LPCSTR lpFunctionName)
+{
+    // Load payload in our own virtual address space
+    HMODULE hLoaded = LoadLibrary(lpPath);
+
+    if (!hLoaded)
+        return NULL;
+    else
+    {
+        //Now we use GetProcAddress to get the address of the exported function
+        void* lpFunc = GetProcAddress(hLoaded, lpFunctionName);
+        //We get the address of the offset of the function from the base of the DLL
+        DWORD dwOffset = (char*)lpFunc - (char*)hLoaded;
+
+        FreeLibrary(hLoaded);
+        //Adding this will tell us where to call the CreateRemoteThread
+        DWORD ret = (DWORD) hPayloadBase + dwOffset;
+        return (LPVOID)&ret;
+    }
+}
+
+BOOL InitPayload(HANDLE hProcess, LPCSTR lpPath, HMODULE hPayloadBase, HWND hwndDlg)
+{
+    void* lpInit = GetPayloadExportAddr(lpPath, hPayloadBase, "Init");
+    if (!lpInit)
+        return FALSE;
+    else
+    {
+        HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0,
+            (LPTHREAD_START_ROUTINE)lpInit, hwndDlg, 0, NULL);
+
+        if (!hThread)
+            return FALSE;
+        else
+            CloseHandle(hThread);
+    }
+
+    return TRUE;
+}
+
+BOOL CleanupPayload(HANDLE hProcess, LPCSTR lpPath, HMODULE hPayloadBase) {
+    void* lpCleanup = GetPayloadExportAddr(lpPath, hPayloadBase, "Cleanup");
+    if (!lpCleanup)
+        return FALSE;
+    else
+    {
+        HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0,
+            (LPTHREAD_START_ROUTINE) lpCleanup, NULL, 0, NULL);
+
+        if (!hThread)
+            return FALSE;
+        else
+            CloseHandle(hThread);   
+    }
+    return TRUE;
 }
 
