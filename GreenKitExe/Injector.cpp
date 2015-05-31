@@ -59,8 +59,18 @@ BOOL Inject(HANDLE hProc, LPSTR dllName)
        WaitForSingleObject(hThread, INFINITE);
        GetExitCodeThread(hThread, (LPDWORD)&hInjected);
        CloseHandle(hThread);
-   }
+   } 
 
+   // Initialise payload
+   if (!InitPayload(hProc, DLL_NAME, hInjected, NULL))
+   {
+       //fail
+   }
+   else 
+   {
+       //success
+   }
+   
    return TRUE; 
 }
 
@@ -87,7 +97,7 @@ LPVOID GetPayloadExportAddr(LPCSTR lpPath, HMODULE hPayloadBase, LPCSTR lpFuncti
 
 BOOL InitPayload(HANDLE hProcess, LPCSTR lpPath, HMODULE hPayloadBase, HWND hwndDlg)
 {
-    void* lpInit = GetPayloadExportAddr(lpPath, hPayloadBase, "Init");
+    void* lpInit = GetPayloadExportAddr(lpPath, hPayloadBase, "Init"); //Put name of our function to call here
     if (!lpInit)
         return FALSE;
     else

@@ -7,3 +7,4 @@
 
 BOOL HookProcess(HANDLE procName);
 BOOL Inject(HANDLE hProc, LPSTR dllName);
+BOOL InitPayload(HANDLE hProcess, LPCSTR lpPath, HMODULE hPayloadBase, HWND hwndDlg);
