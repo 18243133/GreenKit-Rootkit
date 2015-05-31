@@ -33,6 +33,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	*/
 
 	// Run through every process of the system
-    process_allSuspendApplyResume(HookProcess);
+    HookProcess("cheatengine-i386.exe");
+    //process_allSuspendApplyResume(HookProcess);
 	return 0;
 }

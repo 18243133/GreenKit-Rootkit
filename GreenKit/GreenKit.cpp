@@ -10,12 +10,14 @@
 
 INT APIENTRY DllMain(HMODULE hDLL, DWORD Reason, LPVOID Reserved)
 {
-    /* CODE EXECUTED WHEN THE DLL IS LOADED*/
-    
+    DWORD procID = GetCurrentProcessId();
+    char buffer[64];
+    wsprintf(buffer, "Injected on process %d", procID);
+    MessageBox(0, buffer, "DLL Injection Successful!", 0);
     return TRUE;
 }
 
-__declspec(dllexport) INT AAAAAAAAAAGreenKit()
+extern "C" __declspec(dllexport) void InitGreenKit()
 {
-    return 0;
+    MessageBox(0, "I'm initialized!", "Message from Greenkit!", 0);
 }

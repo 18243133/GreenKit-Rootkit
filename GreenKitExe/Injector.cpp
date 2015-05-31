@@ -97,7 +97,7 @@ LPVOID GetPayloadExportAddr(LPCSTR lpPath, HMODULE hPayloadBase, LPCSTR lpFuncti
 
 BOOL InitPayload(HANDLE hProcess, LPCSTR lpPath, HMODULE hPayloadBase, HWND hwndDlg)
 {
-    void* lpInit = GetPayloadExportAddr(lpPath, hPayloadBase, "Init"); //Put name of our function to call here
+    void* lpInit = GetPayloadExportAddr(lpPath, hPayloadBase, "InitGreenKit"); //Put name of our function to call here
     if (!lpInit)
         return FALSE;
     else
