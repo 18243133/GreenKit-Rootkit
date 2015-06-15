@@ -21,7 +21,6 @@ NTSTATUS NTAPI NewZwOpenFile(
 	DWORD dwRet;
 	
 	dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
-	free(sPath);
 
 	if (!mustHideFile(sPath))
 		return ZwOpenFile(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
@@ -41,6 +40,7 @@ NTSTATUS NTAPI NewZwCreateKey(
 	DWORD dwRet;
 	
 	dwRet = GetFinalPathNameByHandle(*KeyHandle, sPath, MAX_PATH, VOLUME_NAME_NONE);
+
 	if (!mustHideReg(sPath))
 		return ZwCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, Class, CreateOptions, Disposition);
 	return STATUS_NO_SUCH_FILE;
