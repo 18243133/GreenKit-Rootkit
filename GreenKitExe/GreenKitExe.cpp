@@ -33,7 +33,39 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	*/
 
 	// Run through every process of the system
-    HookProcess("cheatengine-i386.exe");
+   /* if (TRUE == process_suspendOrResumeAllThreads(4860, TRUE)) {
+        HANDLE hP = OpenProcess(PROCESS_ALL_ACCESS, FALSE, 4860);
+
+        if (NULL != hP) {
+            if (NULL != HookProcess) // For debugging purpose only TODO remove
+                HookProcess(hP);
+           CloseHandle(hP);
+            //process_suspendOrResumeAllThreads(4684, FALSE);
+        }
+    }*/
+    //HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, 5384);
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+
+    if (Process32First(snapshot, &entry) == TRUE)
+    {
+        while (Process32Next(snapshot, &entry) == TRUE)
+        {
+            if (stricmp(entry.szExeFile, "Project2.exe") == 0)
+            {
+                HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
+
+                HookProcess(hProcess);
+
+                CloseHandle(hProcess);
+            }
+        }
+    }
+
+    CloseHandle(snapshot);
+    //HookProcess("cheatengine-i386.exe");
     //process_allSuspendApplyResume(HookProcess);
 	return 0;
 }

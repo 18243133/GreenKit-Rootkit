@@ -173,11 +173,23 @@ INT APIENTRY DllMain(HMODULE hDLL, DWORD Reason, LPVOID Reserved)
     
     char buffer[64];
     wsprintf(buffer, "Injected on process %d", procID);
-    HookFunction("user32.dll", "MessageBoxA", nMessageBox, hook);
-   // HookFunction("ntdll.dll", "NtQuerySystemInformation", NtQuerySystemInformationHOOK, hook);
-    
-    //InitGreenKit();
-   // UnHookFunction("user32.dll", "MessageBoxA", hook);
-    MessageBox(0, buffer, "I AM A FREE FUNCTIONNN", 0);
+    int messageBoxTest = 3;
+    if (messageBoxTest == 1)
+    {
+        HookFunction("user32.dll", "MessageBoxA", nMessageBox, hook);
+        //HookFunction("ntdll.dll", "NtQuerySystemInformation", NtQuerySystemInformationHOOK, hook);
+        MessageBox(0, buffer, "This text will NEVER APPEAR", 0);
+        //InitGreenKit();
+        UnHookFunction("user32.dll", "MessageBoxA", hook);
+        MessageBox(0, buffer, "I AM A FREE FUNCTIONNN", 0);
+    }
+    else if (messageBoxTest == 2)
+    {
+        HookFunction("ntdll.dll", "NtQuerySystemInformation", NtQuerySystemInformationHOOK, hook);
+    }
+    else if (messageBoxTest == 3)
+    {
+        //HookFunction("ntdll.dll", "NtOpenFile", NewNtOpenFile, hook);
+    }
     return TRUE;
 }
