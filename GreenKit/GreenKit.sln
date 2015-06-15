@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreenKit", "GreenKit.vcxproj", "{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreenKitExe", "..\GreenKitExe\GreenKitExe.vcxproj", "{353F1E6B-13ED-42F5-AA8B-B05BF72C73C7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BB1A7F54-7CCF-4127-ABD7-9A908A6982DE} = {BB1A7F54-7CCF-4127-ABD7-9A908A6982DE}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
