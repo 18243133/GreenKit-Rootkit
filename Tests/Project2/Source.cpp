@@ -27,23 +27,27 @@ int main()
     // OpenFile avec en parametres : le nom du fichier(LPCSTR), la struct que t'as créé, et les droits que tu veux (OF_EXIST)
 
     int testOpen = 1;
-    if (testOpen == 1)
+    if (testOpen == 0)
     {
+        getchar();
+        MessageBox(NULL, "Message from Application", "Hook.dll", 0);
+    }
+    else if (testOpen == 1)
+    {
+        typedef NTSTATUS(__stdcall *NT_OPEN_FILE)(OUT PHANDLE FileHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes, OUT PIO_STATUS_BLOCK IoStatusBlock, IN ULONG ShareAccess, IN ULONG OpenOptions);
+        NT_OPEN_FILE NtOpenFileStruct;
+        /* load the ntdll.dll */
+        PVOID Info;
+        HMODULE hModule = LoadLibrary(("ntdll.dll"));
+        NtOpenFileStruct = (NT_OPEN_FILE)GetProcAddress(hModule, "NtOpenFile");
+        if (NtOpenFileStruct == NULL) {
+            printf("Error: could not find the function NtOpenFile in library ntdll.dll.");
+            exit(-1);
+        }
+        printf("NtOpenFile is located at 0x%08x in ntdll.dll.\n", (unsigned int)NtOpenFileStruct);
+
         while (getchar())
         {
-            typedef NTSTATUS(__stdcall *NT_OPEN_FILE)(OUT PHANDLE FileHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes, OUT PIO_STATUS_BLOCK IoStatusBlock, IN ULONG ShareAccess, IN ULONG OpenOptions);
-            NT_OPEN_FILE NtOpenFileStruct;
-
-            /* load the ntdll.dll */
-            PVOID Info;
-            HMODULE hModule = LoadLibrary(("ntdll.dll"));
-            NtOpenFileStruct = (NT_OPEN_FILE)GetProcAddress(hModule, "NtOpenFile");
-            if (NtOpenFileStruct == NULL) {
-                printf("Error: could not find the function NtOpenFile in library ntdll.dll.");
-                exit(-1);
-            }
-            printf("NtOpenFile is located at 0x%08x in ntdll.dll.\n", (unsigned int)NtOpenFileStruct);
-
             /* create the string in the right format */
             UNICODE_STRING filename;
             RtlInitUnicodeString(&filename, L"C:\\temp.txt");
@@ -94,7 +98,7 @@ int main()
                 spi = (PSYSTEM_PROCESS_INFO)((LPBYTE)spi + spi->NextEntryOffset); // Calculate the address of the next entry.
             }
 
-            printf("\nPress any key to continue.\n");
+            printf("\n %d Press any key to continue.\n", status);
             getchar();
 
             VirtualFree(buffer, 0, MEM_RELEASE); // Free the allocated buffer.
