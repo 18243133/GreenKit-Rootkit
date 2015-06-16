@@ -58,7 +58,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                 HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
 
                 HookProcess(hProcess);
-
                 CloseHandle(hProcess);
             }
         }

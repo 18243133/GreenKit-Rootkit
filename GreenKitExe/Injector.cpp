@@ -60,16 +60,6 @@ BOOL Inject(HANDLE hProc, LPSTR dllName)
        GetExitCodeThread(hThread, (LPDWORD)&hInjected);
        CloseHandle(hThread);
    } 
-
-   // Initialise payload
-   if (!InitPayload(hProc, DLL_NAME, hInjected, NULL))
-   {
-       //fail
-   }
-   else 
-   {
-       //success
-   }
    
    return TRUE; 
 }
