@@ -1,12 +1,17 @@
 #ifndef ZW_OPENFILE_H
 # define ZW_OPENFILE_H
-
-NTSTATUS NTAPI NewNtOpenFile(
-    PHANDLE				phFile,
-    ACCESS_MASK			DesiredAccess,
-    POBJECT_ATTRIBUTES	ObjectAttributes,
-    PIO_STATUS_BLOCK	IoStatusBlock,
-    ULONG				ShareAccess,
-    ULONG				OpenOptions);
+#include "stdafx.h"
+#include <windows.h>
+#include <stdio.h>
+#include <iostream>
+//Libs
+#pragma comment(lib, "kernel32")
+#pragma comment(lib, "user32")
+#pragma comment(lib, "advapi32")
+#pragma comment(lib, "shell32")
+#pragma comment(lib, "msvcrt")
+#pragma comment(lib, "shlwapi")
+#pragma comment(lib, "wininet")
+#pragma comment(lib, "ws2_32")
 
 #endif

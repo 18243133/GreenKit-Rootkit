@@ -53,7 +53,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
     {
         while (Process32Next(snapshot, &entry) == TRUE)
         {
-            if (stricmp(entry.szExeFile, "Project2.exe") == 0)
+            if (stricmp(entry.szExeFile, "explorer.exe") == 0)
             {
                 HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
 
