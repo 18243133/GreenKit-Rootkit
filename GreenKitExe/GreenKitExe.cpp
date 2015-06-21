@@ -28,8 +28,8 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 
 	while (TRUE) {
 		process_allSuspendApplyResume(HookProcess);
-		Sleep(100);
-		break; // TODO remove
+		Sleep(500);
+		//break; // TODO remove
 	}
 	return 0;
 }
