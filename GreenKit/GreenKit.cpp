@@ -130,7 +130,7 @@ bool WINAPI DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
     switch (dwReason)
     {
     case DLL_PROCESS_ATTACH:
-        void* l_OldNtQuerySysInformation = (PNT_QUERY_SYSTEM_INFORMATION) Hook("NTDLL.DLL", "NtQuerySystemInformation", HookedNtQuerySystemInformation);
+        void* l_OldNtQuerySysInformation = Hook("NTDLL.DLL", "NtQuerySystemInformation", HookedNtQuerySystemInformation);
         void* l_OldNtOpenFile = Hook("NTDLL.DLL", "NtOpenFile", NewNtOpenFile);
         void* l_OldNtCreateFile = Hook("NTDLL.DLL", "NtCreateFile", NewNtCreateFile);
 
