@@ -2,7 +2,7 @@
 #include "GreenKit.h"
 
 std::map<std::string, void*> m_OldFunctionsMap;
-const wchar_t* m_ProcessToHide = L"Project2.exe";
+const wchar_t* m_ProcessToHide = L"GreenKitExe.exe";
 
 BOOL mustHideFile(TCHAR filePath) {
     return FALSE; // TODO check la fin de la string avec des constantes
