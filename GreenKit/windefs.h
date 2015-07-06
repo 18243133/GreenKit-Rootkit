@@ -42,5 +42,34 @@ typedef NTSTATUS (WINAPI *PNT_CREATE_FILE)(PHANDLE FileHandle,
     PVOID EaBuffer,
     ULONG EaLength);
 
+typedef enum _KEY_INFORMATION_CLASS {
+	KeyBasicInformation = 0,
+	KeyNodeInformation = 1,
+	KeyFullInformation = 2,
+	KeyNameInformation = 3,
+	KeyCachedInformation = 4,
+	KeyFlagsInformation = 5,
+	KeyVirtualizationInformation = 6,
+	KeyHandleTagsInformation = 7,
+	MaxKeyInfoClass = 8
+} KEY_INFORMATION_CLASS;
+
+typedef struct _KEY_BASIC_INFORMATION {
+	LARGE_INTEGER LastWriteTime;
+	ULONG         TitleIndex;
+	ULONG         NameLength;
+	WCHAR         Name[1];
+} KEY_BASIC_INFORMATION, *PKEY_BASIC_INFORMATION;
+
+typedef struct _KEY_NODE_INFORMATION
+{
+	LARGE_INTEGER LastWriteTime;
+	ULONG         TitleIndex;
+	ULONG         ClassOffset;
+	ULONG         ClassLength;
+	ULONG         NameLength;
+	WCHAR         Name[1];
+	/* Class[1]; */
+} KEY_NODE_INFORMATION, *PKEY_NODE_INFORMATION;
 
 #endif

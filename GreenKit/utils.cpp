@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "utils.h"
+#include "windefs.h"
 
 #include <string>
 

