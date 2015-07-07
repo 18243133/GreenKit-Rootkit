@@ -52,6 +52,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource1.h">
+    <ClInclude Include="FindFiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -77,10 +78,17 @@
     <ClCompile Include="NtEnumerateKey.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+<<<<<<< HEAD
     <ClCompile Include="PortScan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Exploit.cpp">
+=======
+    <ClCompile Include="FindFiles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RegEnumValue.cpp">
+>>>>>>> 39433177972b39a0fc0d5ff28b482517876aa772
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

