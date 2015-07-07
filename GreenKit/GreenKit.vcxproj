@@ -83,6 +83,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FindFiles.h" />
     <ClInclude Include="GreenKit.h" />
     <ClInclude Include="hooking.h" />
     <ClInclude Include="NtQuerySystemInformation.h" />
@@ -95,10 +96,12 @@
     <ClInclude Include="NtEnumerateKey.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FindFiles.cpp" />
     <ClCompile Include="GreenKit.cpp" />
     <ClCompile Include="hooking.cpp" />
     <ClCompile Include="NtQuerySystemInformation.cpp" />
     <ClCompile Include="process.cpp" />
+    <ClCompile Include="RegEnumValue.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
