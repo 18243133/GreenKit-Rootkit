@@ -42,10 +42,10 @@
     <ClInclude Include="hooking.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NtCreateKey.h">
+    <ClInclude Include="NtQuerySystemInformation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NtQuerySystemInformation.h">
+    <ClInclude Include="NtEnumerateKey.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PortScan.h">
@@ -71,10 +71,10 @@
     <ClCompile Include="hooking.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NtCreateKey.cpp">
+    <ClCompile Include="NtQuerySystemInformation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NtQuerySystemInformation.cpp">
+    <ClCompile Include="NtEnumerateKey.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PortScan.cpp">
