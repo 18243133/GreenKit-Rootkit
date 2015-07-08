@@ -26,10 +26,29 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 	hInst = hInstance;
 
-	while (TRUE) {
+	/*while (TRUE) {
 		process_allSuspendApplyResume(HookProcess);
 		Sleep(500);
 		//break; // TODO remove
-	}
+	}*/
+    //HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, 5384);
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+
+    if (Process32First(snapshot, &entry) == TRUE)
+    {
+        while (Process32Next(snapshot, &entry) == TRUE)
+        {
+            if (stricmp(entry.szExeFile, "explorer.exe") == 0)
+            {
+                HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
+
+                HookProcess(hProcess);
+                CloseHandle(hProcess);
+            }
+        }
+    }
 	return 0;
 }

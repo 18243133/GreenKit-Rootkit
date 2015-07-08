@@ -45,9 +45,8 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 	ULONG tmpIndex;
 	HANDLE h_tmp;
 	OBJECT_ATTRIBUTES ObjectAttributes;
-
+    
 	MessageBox(0, "NTDLL OPEN HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
-
 	ret = ((TD_NtEnumerateKey)hooking_getOldFunction("NtEnumerateKey")) (KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
 
 	if (!(KeyInformationClass == KeyBasicInformation || KeyInformationClass == KeyNodeInformation))
