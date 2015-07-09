@@ -13,6 +13,7 @@ thanks and hope someone finds these useful
 
 #include <windows.h>
 #include <wchar.h>
+#include "windefs.h"
 
 typedef void (*PELPEBLOCKROUTINE)( PVOID PebLock ); 
 
@@ -175,7 +176,7 @@ typedef struct _ELPROCESS_BASIC_INFORMATION
     ULONG_PTR	UniqueProcessId;
     PVOID		Reserved3;
 } ELPROCESS_BASIC_INFORMATION;
-
+/*
 typedef enum _ELPROCESS_INFORMATION_CLASS 
 {
 	ProcessBasicInformation, 
@@ -203,7 +204,7 @@ typedef enum _ELPROCESS_INFORMATION_CLASS
 	ProcessPriorityBoost, 
 	MaxProcessInfoClass
 } ELPROCESS_INFORMATION_CLASS, *PELPROCESS_INFORMATION_CLASS;
-
+*/
 typedef struct _CLIENT_ID {
     HANDLE UniqueProcess;
     HANDLE UniqueThread;
@@ -222,12 +223,12 @@ typedef struct _ELSYSTEM_THREAD_INFORMATION {
     ULONG ThreadState;
     ULONG WaitReason;
 } ELSYSTEM_THREAD_INFORMATION, *PELSYSTEM_THREAD_INFORMATION;
-
+/*
 typedef enum _SYSTEM_INFORMATION_CLASS {
 
 	SystemBasicInformation,SystemProcessorInformation,SystemPerformanceInformation,SystemTimeOfDayInformation,SystemPathInformation,SystemProcessInformation,SystemCallCountInformation,SystemDeviceInformation,SystemProcessorPerformanceInformation,SystemFlagsInformation,SystemCallTimeInformation,SystemModuleInformation,SystemLocksInformation,SystemStackTraceInformation,SystemPagedPoolInformation,SystemNonPagedPoolInformation,SystemHandleInformation,SystemObjectInformation,SystemPageFileInformation,SystemVdmInstemulInformation,SystemVdmBopInformation,SystemFileCacheInformation,SystemPoolTagInformation,SystemInterruptInformation,SystemDpcBehaviorInformation,SystemFullMemoryInformation,SystemLoadGdiDriverInformation,SystemUnloadGdiDriverInformation,SystemTimeAdjustmentInformation,SystemSummaryMemoryInformation,SystemNextEventIdInformation,SystemEventIdsInformation,SystemCrashDumpInformation,SystemExceptionInformation,SystemCrashDumpStateInformation,SystemKernelDebuggerInformation,SystemContextSwitchInformation,SystemRegistryQuotaInformation,SystemExtendServiceTableInformation,SystemPrioritySeperation,SystemPlugPlayBusInformation,SystemDockInformation,ELSystemPowerInformation,SystemProcessorSpeedInformation,SystemCurrentTimeZoneInformation,SystemLookasideInformation
 
-} ELSYSTEM_INFORMATION_CLASS,*PSYSTEM_INFORMATION_CLASS;
+} ELSYSTEM_INFORMATION_CLASS,*PSYSTEM_INFORMATION_CLASS;*/
 typedef enum _KWAIT_REASON
 {
          Executive = 0,
@@ -300,7 +301,7 @@ typedef struct _VM_COUNTERS
     int PagefileUsage;
     int PeakPagefileUsage;
 }VM_COUNTERS;
-
+/*
 typedef struct _SYSTEM_PROCESS_INFORMATION
 {
     DWORD NextEntryOffset;
@@ -311,9 +312,9 @@ typedef struct _SYSTEM_PROCESS_INFORMATION
     DWORD dReserved04;
     DWORD dReserved05;
     DWORD dReserved06;
-    FILETIME ftCreateTime; /* relative to 01-01-1601 */
-    FILETIME ftUserTime; /* 100 nsec units */
-    FILETIME ftKernelTime; /* 100 nsec units */
+    FILETIME ftCreateTime;
+    FILETIME ftUserTime;
+    FILETIME ftKernelTime; 
     ELUNICODE_STRING ProcessName;
     DWORD BasePriority;
     DWORD dUniqueProcessId;
@@ -325,7 +326,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION
     DWORD dCommitCharge;
     ELSYSTEM_THREAD_INFORMATION ThreadInfos[1];
 } ELSYSTEM_PROCESS_INFORMATION, *PELSYSTEM_PROCESS_INFORMATION;
-
+*/
 
 //Gets the PEB for the current process
 PELPEB EL_GetPeb();

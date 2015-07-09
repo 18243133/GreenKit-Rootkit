@@ -3,7 +3,7 @@
 #include "stdafx.h"
 #include "./el_win_structs.h"
 
-typedef LONG (WINAPI *NTQIP)(HANDLE, ELPROCESS_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+typedef LONG(WINAPI *NTQIP)(HANDLE, PMY_SYSTEM_PROCESS_INFORMATION, PVOID, ULONG, PULONG);
 
 PELPEB EL_GetPeb()
 {
@@ -27,7 +27,7 @@ PELPEB EL_GetPeb()
 
 	HANDLE tProc = GetCurrentProcess();
 	
-	NtQueryInfoProcess( tProc, ProcessBasicInformation, &tPbi, sizeof( tPbi ), &tSize );
+	NtQueryInfoProcess( tProc, 0, &tPbi, sizeof( tPbi ), &tSize );
 	
 	peb = (ELPEB *) tPbi.PebBaseAddress;
 
