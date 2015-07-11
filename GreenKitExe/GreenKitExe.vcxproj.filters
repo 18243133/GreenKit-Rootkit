@@ -19,6 +19,9 @@
     <ClCompile Include="MemoryModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\GreenKit\BitcoinMiner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="process.h">
@@ -43,6 +46,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MemoryModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BitcoinMiner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

