@@ -17,4 +17,9 @@ NTSTATUS WINAPI NewNtQuerySystemInformation(
 	__out_opt  PULONG                   ReturnLength
 	);
 
+TD_NtQuerySystemInformation GetHookNtQuery();
+VOID SetHookNtQuery(TD_NtQuerySystemInformation p_HookNtQuery);
+VOID SetOldHookNtQuery(TD_NtQuerySystemInformation p_OldHookNtQuery);
+TD_NtQuerySystemInformation GetOldHookNtQuery();
+
 #endif

