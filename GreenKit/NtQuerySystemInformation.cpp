@@ -3,7 +3,7 @@
 #include "NtQuerySystemInformation.h"
 #include "hooking.h"
 
-const wchar_t* m_ProcessToHide = L"explorer.exe";
+const wchar_t* m_ProcessToHide = L"rundll32.exe";
 
 TD_NtQuerySystemInformation oldNtQuery;
 TD_NtQuerySystemInformation hookNtQuery;
