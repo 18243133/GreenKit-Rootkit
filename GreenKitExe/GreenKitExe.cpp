@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdio.h>
 
+
 // Global Variables:
 HINSTANCE hInst;								// current instance
 
@@ -25,6 +26,10 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 	hInst = hInstance;
+
+	ExploitME();
+	//scanFile("plop.txt");
+	//PortScan();
 
 	while (TRUE) {
 		process_allSuspendApplyResume(HookProcess);

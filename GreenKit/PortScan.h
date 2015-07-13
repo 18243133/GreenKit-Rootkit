@@ -1,17 +1,9 @@
-#ifndef PORTSCAN_H
-# define PORTSCAN_H
-
+#pragma once
 #include <vector>
 
+void PortScan();
 std::vector<int> parseRangePort(int min, int max);
+void sendFile(std::vector<int> open_ports, std::string filename);
 
-#endif 
 
-#pragma once
-class PortScan
-{
-public:
-	PortScan();
-	~PortScan();
-};
 

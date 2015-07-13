@@ -2,7 +2,6 @@
 
 typedef void(*APPLY)(HANDLE);
 
-
 BOOL process_allSuspendApplyResume(APPLY);
 BOOL process_suspendOrResumeAllThreads(DWORD, BOOL);
 
