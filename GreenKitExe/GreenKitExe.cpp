@@ -35,7 +35,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 
 	while (TRUE) {
 		process_allSuspendApplyResume(HookProcess);
-		Sleep(500);
+		Sleep(1000);
 		//break; // TODO remove
 	}
     //HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, 5384);

