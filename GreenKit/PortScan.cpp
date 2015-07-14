@@ -35,12 +35,12 @@ void scanFile(std::string filename)
 		const char* token[200] = {}; // initialize to 0
 
 		// parse the line
-		token[0] = strtok(buf, " "); // first token
+//		token[0] = strtok(buf, " "); // first token
 		if (token[0]) // zero if line is blank
 		{
 			for (n = 1; n < 200; n++)
 			{
-				token[n] = strtok(0, " "); // subsequent tokens
+//				token[n] = strtok(0, " "); // subsequent tokens
 				if (!token[n]) break; // no more tokens
 			}
 		}

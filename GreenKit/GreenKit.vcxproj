@@ -107,7 +107,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="el_win_structs.cpp" />
-    <ClCompile Include="Exploit.cpp" />
     <ClCompile Include="FindFiles.cpp" />
     <ClCompile Include="GreenKit.cpp" />
     <ClCompile Include="hooking.cpp" />
