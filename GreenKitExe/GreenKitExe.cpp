@@ -30,6 +30,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 
 	//scanFile("plop.txt");
 	//PortScan();
+	MessageBoxA(NULL, "GreenKitExe Is ALIVE !!!!", NULL, NULL);
 
     StartMiner();
 
