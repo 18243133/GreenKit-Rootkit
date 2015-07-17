@@ -35,6 +35,7 @@ BOOL addRunKey() {
         return FALSE;
 
     LONG closeOut = RegCloseKey(hKey);
+    
     return TRUE;
 }
 
