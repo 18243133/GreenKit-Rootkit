@@ -3,7 +3,6 @@
 #include "Infiltration.h"
 #include <windows.h>
 
-
 void RunExploit()
 {
 	STARTUPINFOA si;
@@ -107,3 +106,4 @@ int ExploitME()
 
 	return EXIT_SUCCESS;
 }
+
