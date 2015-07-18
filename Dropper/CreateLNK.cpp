@@ -59,7 +59,6 @@ int create_shortcut(CString filepath, char* shortcut_path)
 		CoUninitialize();
 		return 1;
 	}
-	MessageBoxA(NULL, "ALLLLLLLLAAA", NULL, NULL);
 	return 0;
 }
 
