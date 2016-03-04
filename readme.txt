@@ -1,6 +1,1 @@
-How to test DLL injection ?
-
--Modify the process to hook in the DLLInjector.cpp file (MUST BE 32 bits)
--Build
--In Greenkit/Debug, execute DLLInjector.exe (with admin rights)
--It'll create a temp.txt file in C:// with text in it if it worked
+No readme, read the code. The purpose is not to use it.
